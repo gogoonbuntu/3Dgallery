@@ -1,0 +1,144 @@
+.closeup-view {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    pointer-events: none;
+    z-index: 80;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 16px;
+    padding-top: calc(16px + env(safe-area-inset-top));
+    padding-bottom: calc(100px + env(safe-area-inset-bottom));
+}
+
+.closeup-header {
+    display: flex;
+    justify-content: center;
+    pointer-events: auto;
+}
+
+.closeup-info {
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(8px);
+    padding: 12px 20px;
+    border-radius: 12px;
+    text-align: center;
+    animation: fadeIn 0.5s ease-out;
+    max-width: 80%;
+}
+
+.closeup-info h2 {
+    margin: 0 0 2px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #fff;
+}
+
+.closeup-info p {
+    margin: 0;
+    font-size: 0.8rem;
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.closeup-back-btn {
+    position: absolute;
+    top: calc(16px + env(safe-area-inset-top));
+    left: 16px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 16px;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(8px);
+    border: none;
+    border-radius: 10px;
+    color: white;
+    font-size: 0.9rem;
+    cursor: pointer;
+    pointer-events: auto;
+    transition: all 0.2s ease;
+    animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateX(-10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+.closeup-back-btn:hover {
+    background: rgba(0, 0, 0, 0.7);
+}
+
+.back-icon {
+    font-size: 1rem;
+}
+
+.back-text {
+    font-size: 0.85rem;
+}
+
+.closeup-description {
+    position: absolute;
+    bottom: calc(60px + env(safe-area-inset-bottom));
+    left: 16px;
+    right: 16px;
+    max-width: 400px;
+    margin: 0 auto;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(8px);
+    padding: 12px 16px;
+    border-radius: 10px;
+    pointer-events: auto;
+    animation: fadeIn 0.5s ease-out 0.2s both;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(5px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.closeup-description p {
+    margin: 0;
+    font-size: 0.9rem;
+    color: rgba(255, 255, 255, 0.9);
+    line-height: 1.5;
+}
+
+.closeup-hint {
+    position: absolute;
+    bottom: calc(24px + env(safe-area-inset-bottom));
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 0.8rem;
+    color: rgba(255, 255, 255, 0.4);
+    animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+
+    0%,
+    100% {
+        opacity: 0.4;
+    }
+
+    50% {
+        opacity: 0.7;
+    }
+}
