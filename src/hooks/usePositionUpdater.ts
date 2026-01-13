@@ -1,4 +1,4 @@
-import { useRef, useCallback } from 'react';
+import { useRef, useCallback, useEffect } from 'react';
 import { useMultiplayerStore } from '../store/multiplayerStore';
 import { updatePlayerPosition } from '../lib/firebase';
 
@@ -16,6 +16,24 @@ export function usePositionUpdater() {
     const lastUpdateTime = useRef<number>(0);
     const lastPosition = useRef<{ x: number; y: number; z: number } | null>(null);
     const lastRotation = useRef<number>(0);
+    const initialUpdateDone = useRef(false);
+
+    // 첫 위치 업데이트를 즉시 수행
+    useEffect(() => {
+        if (myPlayerId && !initialUpdateDone.current) {
+            initialUpdateDone.current = true;
+            // 초기 위치 (카메라 기본 위치)
+            const initialPos = { x: 0, y: 1.6, z: 5 };
+            updatePlayerPosition({
+                id: myPlayerId,
+                nickname: myNickname,
+                position: initialPos,
+                rotation: 0,
+                color: myColor,
+                lastUpdate: Date.now(),
+            }).catch(console.error);
+        }
+    }, [myPlayerId, myNickname, myColor]);
 
     const updateMyPosition = useCallback(
         (position: { x: number; y: number; z: number }, rotation: number) => {
