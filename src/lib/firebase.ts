@@ -27,6 +27,32 @@ export const artworksCollection = collection(db, 'artworks');
 export const messagesCollection = collection(db, 'guestMessages');
 export const settingsDoc = doc(db, 'settings', 'gallery');
 
+// Players collection for multiplayer
+export const playersCollection = collection(db, 'players');
+
+// Player utility functions
+export async function updatePlayerPosition(player: {
+    id: string;
+    nickname: string;
+    position: { x: number; y: number; z: number };
+    rotation: number;
+    color: string;
+    lastUpdate: number;
+}) {
+    await setDoc(doc(playersCollection, player.id), player);
+}
+
+export async function removePlayer(id: string) {
+    await deleteDoc(doc(playersCollection, id));
+}
+
+export function subscribeToPlayers(callback: (players: unknown[]) => void) {
+    return onSnapshot(playersCollection, (snapshot) => {
+        const players = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        callback(players);
+    });
+}
+
 // Firebase utility functions
 export async function loadArtworks() {
     const snapshot = await getDocs(artworksCollection);

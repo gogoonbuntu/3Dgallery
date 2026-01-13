@@ -4,7 +4,9 @@ import { ArtworkCollection } from './Artwork';
 import { GuestbookWall } from './GuestbookWall';
 import { CloseUpCamera } from './CloseUpCamera';
 import { MusicPlayer3D } from './MusicPlayer3D';
+import { OtherPlayers } from './OtherPlayers';
 import { useControls } from '../hooks/useTouchControls';
+import { usePlayerPositionSync } from '../hooks/usePlayerPositionSync';
 import { useGalleryStore } from '../store/galleryStore';
 
 function Controller() {
@@ -12,6 +14,9 @@ function Controller() {
 
     // Only enable controls when not in close-up mode
     useControls();
+
+    // Sync player position for multiplayer
+    usePlayerPositionSync();
 
     return null;
 }
@@ -37,6 +42,8 @@ export function Scene() {
             </Suspense>
             <GuestbookWall />
             <MusicPlayer3D />
+            <OtherPlayers />
         </>
     );
 }
+
