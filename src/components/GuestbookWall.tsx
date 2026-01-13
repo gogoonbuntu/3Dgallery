@@ -1,8 +1,21 @@
+import { memo, useMemo } from 'react';
 import * as THREE from 'three';
 import { Text } from '@react-three/drei';
 import { useGalleryStore } from '../store/galleryStore';
 
-function MessageCard({ message, position }: { message: { id: string; nickname: string; content: string }; position: [number, number, number] }) {
+interface MessageCardProps {
+    message: { id: string; nickname: string; content: string };
+    position: [number, number, number];
+}
+
+// memo로 불필요한 리렌더링 방지
+const MessageCard = memo(function MessageCard({ message, position }: MessageCardProps) {
+    const truncatedContent = useMemo(() => {
+        return message.content.length > 60
+            ? `${message.content.substring(0, 57)}...`
+            : message.content;
+    }, [message.content]);
+
     return (
         <group position={position}>
             {/* Card background */}
@@ -26,7 +39,7 @@ function MessageCard({ message, position }: { message: { id: string; nickname: s
                 anchorX="center"
                 anchorY="middle"
             >
-                {message.content.length > 60 ? `${message.content.substring(0, 57)}...` : message.content}
+                {truncatedContent}
             </Text>
 
             {/* Nickname */}
@@ -41,10 +54,16 @@ function MessageCard({ message, position }: { message: { id: string; nickname: s
             </Text>
         </group>
     );
-}
+});
 
 export function GuestbookWall() {
-    const { guestMessages } = useGalleryStore();
+    // 선택적 구독: guestMessages만 구독
+    const guestMessages = useGalleryStore((state) => state.guestMessages);
+
+    // 최근 6개 메시지만 표시
+    const recentMessages = useMemo(() => {
+        return guestMessages.slice(-6);
+    }, [guestMessages]);
 
     return (
         <group position={[-7.8, 2.5, 0]} rotation={[0, Math.PI / 2, 0]}>
@@ -64,7 +83,7 @@ export function GuestbookWall() {
             </Text>
 
             {/* Display message cards */}
-            {guestMessages.slice(-6).map((message, index) => (
+            {recentMessages.map((message, index) => (
                 <MessageCard
                     key={message.id}
                     message={message}
@@ -74,4 +93,3 @@ export function GuestbookWall() {
         </group>
     );
 }
-

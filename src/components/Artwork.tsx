@@ -1,4 +1,4 @@
-import { useRef, useState, useMemo } from 'react';
+import { useRef, useState, useMemo, memo, useCallback } from 'react';
 import { useLoader } from '@react-three/fiber';
 import type { ThreeEvent } from '@react-three/fiber';
 import * as THREE from 'three';
@@ -23,14 +23,20 @@ const FRAME_COLORS: Record<string, string> = {
     none: 'transparent',
 };
 
-export function Artwork({ artwork }: ArtworkProps) {
+// 개별 Artwork 컴포넌트 - memo로 불필요한 리렌더링 방지
+const ArtworkItem = memo(function ArtworkItem({ artwork }: ArtworkProps) {
     const meshRef = useRef<THREE.Mesh>(null);
     const [hovered, setHovered] = useState(false);
-    const { selectArtwork, enterCloseUpMode, selectedArtwork, gallerySettings } = useGalleryStore();
+
+    // 선택적 구독: 필요한 상태만 구독하여 리렌더링 최소화
+    const selectArtwork = useGalleryStore((state) => state.selectArtwork);
+    const enterCloseUpMode = useGalleryStore((state) => state.enterCloseUpMode);
+    const selectedArtworkId = useGalleryStore((state) => state.selectedArtwork?.id);
+    const frameStyle = useGalleryStore((state) => state.gallerySettings.frameStyle);
 
     // Determine current frame style and color (individual override or global setting)
-    const currentFrameStyle = (artwork.frameStyle || gallerySettings.frameStyle) as FrameStyle;
-    const isSelected = selectedArtwork?.id === artwork.id;
+    const currentFrameStyle = (artwork.frameStyle || frameStyle) as FrameStyle;
+    const isSelected = selectedArtworkId === artwork.id;
     const baseFrameColor = artwork.frameColor || FRAME_COLORS[currentFrameStyle] || '#2c2c2c';
     const frameColor = isSelected ? '#d4af37' : baseFrameColor;
 
@@ -52,7 +58,7 @@ export function Artwork({ artwork }: ArtworkProps) {
     }, [texture.image?.width, texture.image?.height]);
 
     // Calculate position based on wall
-    const getPosition = (): [number, number, number] => {
+    const position = useMemo((): [number, number, number] => {
         const y = artwork.position.y;
         const padding = 0.05; // Slightly away from wall to avoid z-fighting
         switch (artwork.wall) {
@@ -65,27 +71,30 @@ export function Artwork({ artwork }: ArtworkProps) {
             default:
                 return [0, y, 0];
         }
-    };
+    }, [artwork.wall, artwork.position.x, artwork.position.y]);
 
-    const getRotation = (): [number, number, number] => {
+    const rotation = useMemo((): [number, number, number] => {
         switch (artwork.wall) {
             case 'A': return [0, 0, 0];
             case 'B': return [0, -Math.PI / 2, 0];
             case 'C': return [0, Math.PI, 0];
             default: return [0, 0, 0];
         }
-    };
+    }, [artwork.wall]);
 
-    const handleClick = (e: ThreeEvent<MouseEvent>) => {
+    const handleClick = useCallback((e: ThreeEvent<MouseEvent>) => {
         e.stopPropagation();
         selectArtwork(artwork);
-    };
+    }, [selectArtwork, artwork]);
 
-    const handleDoubleClick = (e: ThreeEvent<MouseEvent>) => {
+    const handleDoubleClick = useCallback((e: ThreeEvent<MouseEvent>) => {
         e.stopPropagation();
         selectArtwork(artwork);
         enterCloseUpMode();
-    };
+    }, [selectArtwork, enterCloseUpMode, artwork]);
+
+    const handlePointerOver = useCallback(() => setHovered(true), []);
+    const handlePointerOut = useCallback(() => setHovered(false), []);
 
     // Render Different Frame Types
     const Frame = useMemo(() => {
@@ -202,7 +211,7 @@ export function Artwork({ artwork }: ArtworkProps) {
     }, [currentFrameStyle, frameColor, imageSize]);
 
     return (
-        <group position={getPosition()} rotation={getRotation()}>
+        <group position={position} rotation={rotation}>
             {/* Frame */}
             {Frame}
 
@@ -212,8 +221,8 @@ export function Artwork({ artwork }: ArtworkProps) {
                 position={[0, 0, 0.01]}
                 onClick={handleClick}
                 onDoubleClick={handleDoubleClick}
-                onPointerOver={() => setHovered(true)}
-                onPointerOut={() => setHovered(false)}
+                onPointerOver={handlePointerOver}
+                onPointerOut={handlePointerOut}
             >
                 <planeGeometry args={[imageSize.width, imageSize.height]} />
                 <meshStandardMaterial
@@ -234,17 +243,20 @@ export function Artwork({ artwork }: ArtworkProps) {
             />
         </group>
     );
-}
+});
+
+// 하위 호환성을 위한 Artwork export
+export const Artwork = ArtworkItem;
 
 export function ArtworkCollection() {
-    const { artworks } = useGalleryStore();
+    // 선택적 구독: artworks만 구독
+    const artworks = useGalleryStore((state) => state.artworks);
 
     return (
         <group>
             {artworks.map((artwork) => (
-                <Artwork key={artwork.id} artwork={artwork} />
+                <ArtworkItem key={artwork.id} artwork={artwork} />
             ))}
         </group>
     );
 }
-
