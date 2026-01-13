@@ -1,4 +1,4 @@
-import { useRef, useState, useEffect, useMemo } from 'react';
+import { useRef, useState, useMemo } from 'react';
 import { useLoader } from '@react-three/fiber';
 import type { ThreeEvent } from '@react-three/fiber';
 import * as THREE from 'three';
@@ -26,7 +26,6 @@ const FRAME_COLORS: Record<string, string> = {
 export function Artwork({ artwork }: ArtworkProps) {
     const meshRef = useRef<THREE.Mesh>(null);
     const [hovered, setHovered] = useState(false);
-    const [imageSize, setImageSize] = useState({ width: 1, height: 1 });
     const { selectArtwork, enterCloseUpMode, selectedArtwork, gallerySettings } = useGalleryStore();
 
     // Determine current frame style and color (individual override or global setting)
@@ -38,17 +37,19 @@ export function Artwork({ artwork }: ArtworkProps) {
     // Load texture
     const texture = useLoader(THREE.TextureLoader, artwork.imageUrl);
 
-    useEffect(() => {
+    // Calculate image size using useMemo for stable rendering
+    const imageSize = useMemo(() => {
         if (texture.image) {
             const aspect = texture.image.width / texture.image.height;
             const maxSize = 2;
             if (aspect > 1) {
-                setImageSize({ width: maxSize, height: maxSize / aspect });
+                return { width: maxSize, height: maxSize / aspect };
             } else {
-                setImageSize({ width: maxSize * aspect, height: maxSize });
+                return { width: maxSize * aspect, height: maxSize };
             }
         }
-    }, [texture]);
+        return { width: 1, height: 1 };
+    }, [texture.image?.width, texture.image?.height]);
 
     // Calculate position based on wall
     const getPosition = (): [number, number, number] => {
