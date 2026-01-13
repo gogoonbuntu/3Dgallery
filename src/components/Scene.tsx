@@ -3,11 +3,12 @@ import { GalleryRoom } from './GalleryRoom';
 import { ArtworkCollection } from './Artwork';
 import { GuestbookWall } from './GuestbookWall';
 import { CloseUpCamera } from './CloseUpCamera';
+import { MusicPlayer3D } from './MusicPlayer3D';
 import { useControls } from '../hooks/useTouchControls';
 import { useGalleryStore } from '../store/galleryStore';
 
 function Controller() {
-    const { isCloseUpMode } = useGalleryStore();
+    useGalleryStore();
 
     // Only enable controls when not in close-up mode
     useControls();
@@ -35,6 +36,7 @@ export function Scene() {
                 <ArtworkCollection />
             </Suspense>
             <GuestbookWall />
+            <MusicPlayer3D />
         </>
     );
 }

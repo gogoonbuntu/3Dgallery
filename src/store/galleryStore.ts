@@ -1,4 +1,18 @@
 import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
+
+export type FrameStyle =
+  | 'classic'
+  | 'modern'
+  | 'minimal'
+  | 'ornate'
+  | 'thin'
+  | 'thick'
+  | 'shadow'
+  | 'glass'
+  | 'wood'
+  | 'metal'
+  | 'none';
 
 export interface Artwork {
   id: string;
@@ -9,6 +23,8 @@ export interface Artwork {
   imageUrl: string;
   wall: 'A' | 'B' | 'C';
   position: { x: number; y: number };
+  frameStyle?: FrameStyle;
+  frameColor?: string;
 }
 
 export interface GuestMessage {
@@ -18,27 +34,65 @@ export interface GuestMessage {
   createdAt: Date;
 }
 
+export interface GallerySettings {
+  wallColor: string;
+  wallPattern: 'none' | 'brick' | 'stripes' | 'grid' | 'dots' | 'chevron' | 'noise';
+  floorTexture: 'wood' | 'marble' | 'concrete' | 'stone' | 'herringbone' | 'carpet';
+  frameStyle: FrameStyle;
+  artworksPerWall: number;
+}
+
+export type PlayerDesign = 'speaker' | 'lp';
+
+export interface MusicSettings {
+  isPlaying: boolean;
+  volume: number;
+  currentTrackIndex: number;
+  playerDesign: PlayerDesign;
+}
+
 interface GalleryState {
   // Artworks
   artworks: Artwork[];
   selectedArtwork: Artwork | null;
   isCloseUpMode: boolean;
-  
+
   // Guestbook
   guestMessages: GuestMessage[];
   isGuestbookOpen: boolean;
-  
+
   // UI
   showTouchGuide: boolean;
   showArtworkPanel: boolean;
-  
+
+  // Admin
+  isAdmin: boolean;
+  isAdminPanelOpen: boolean;
+  gallerySettings: GallerySettings;
+  musicSettings: MusicSettings;
+
   // Actions
   selectArtwork: (artwork: Artwork | null) => void;
   enterCloseUpMode: () => void;
   exitCloseUpMode: () => void;
   addGuestMessage: (nickname: string, content: string) => void;
+  removeGuestMessage: (id: string) => void;
   toggleGuestbook: () => void;
   dismissTouchGuide: () => void;
+
+  // Admin Actions
+  setAdminMode: (isAdmin: boolean) => void;
+  toggleAdminPanel: () => void;
+  updateGallerySettings: (settings: Partial<GallerySettings>) => void;
+  addArtwork: (artwork: Omit<Artwork, 'id'>) => void;
+  removeArtwork: (id: string) => void;
+  updateArtwork: (id: string, updates: Partial<Artwork>) => void;
+
+  // Music Actions
+  toggleMusic: () => void;
+  setVolume: (volume: number) => void;
+  setTrack: (index: number) => void;
+  setPlayerDesign: (design: PlayerDesign) => void;
 }
 
 // Sample artworks
@@ -111,36 +165,124 @@ const sampleMessages: GuestMessage[] = [
   },
 ];
 
-export const useGalleryStore = create<GalleryState>((set) => ({
-  artworks: sampleArtworks,
-  selectedArtwork: null,
-  isCloseUpMode: false,
-  guestMessages: sampleMessages,
-  isGuestbookOpen: false,
-  showTouchGuide: true,
-  showArtworkPanel: false,
+const defaultSettings: GallerySettings = {
+  wallColor: '#f5f5f5',
+  wallPattern: 'none',
+  floorTexture: 'wood',
+  frameStyle: 'classic',
+  artworksPerWall: 2,
+};
 
-  selectArtwork: (artwork) =>
-    set({ selectedArtwork: artwork, showArtworkPanel: artwork !== null }),
+const defaultMusicSettings: MusicSettings = {
+  isPlaying: false,
+  volume: 0.5,
+  currentTrackIndex: 0,
+  playerDesign: 'speaker',
+};
 
-  enterCloseUpMode: () => set({ isCloseUpMode: true, showArtworkPanel: false }),
+export const useGalleryStore = create<GalleryState>()(
+  persist(
+    (set) => ({
+      artworks: sampleArtworks,
+      selectedArtwork: null,
+      isCloseUpMode: false,
+      guestMessages: sampleMessages,
+      isGuestbookOpen: false,
+      showTouchGuide: true,
+      showArtworkPanel: false,
+      isAdmin: false,
+      isAdminPanelOpen: false,
+      gallerySettings: defaultSettings,
+      musicSettings: defaultMusicSettings,
 
-  exitCloseUpMode: () => set({ isCloseUpMode: false }),
+      selectArtwork: (artwork) =>
+        set({ selectedArtwork: artwork, showArtworkPanel: artwork !== null }),
 
-  addGuestMessage: (nickname, content) =>
-    set((state) => ({
-      guestMessages: [
-        ...state.guestMessages,
-        {
-          id: Date.now().toString(),
-          nickname: nickname || '익명',
-          content,
-          createdAt: new Date(),
-        },
-      ],
-    })),
+      enterCloseUpMode: () => set({ isCloseUpMode: true, showArtworkPanel: false }),
 
-  toggleGuestbook: () => set((state) => ({ isGuestbookOpen: !state.isGuestbookOpen })),
+      exitCloseUpMode: () => set({ isCloseUpMode: false }),
 
-  dismissTouchGuide: () => set({ showTouchGuide: false }),
-}));
+      addGuestMessage: (nickname, content) =>
+        set((state) => ({
+          guestMessages: [
+            ...state.guestMessages,
+            {
+              id: Date.now().toString(),
+              nickname: nickname || '익명',
+              content,
+              createdAt: new Date(),
+            },
+          ],
+        })),
+
+      removeGuestMessage: (id) =>
+        set((state) => ({
+          guestMessages: state.guestMessages.filter((m) => m.id !== id),
+        })),
+
+      toggleGuestbook: () => set((state) => ({ isGuestbookOpen: !state.isGuestbookOpen })),
+
+      dismissTouchGuide: () => set({ showTouchGuide: false }),
+
+      // Admin Actions
+      setAdminMode: (isAdmin) => set({ isAdmin }),
+
+      toggleAdminPanel: () => set((state) => ({ isAdminPanelOpen: !state.isAdminPanelOpen })),
+
+      updateGallerySettings: (settings) =>
+        set((state) => ({
+          gallerySettings: { ...state.gallerySettings, ...settings },
+        })),
+
+      addArtwork: (artwork) =>
+        set((state) => ({
+          artworks: [
+            ...state.artworks,
+            { ...artwork, id: Date.now().toString() },
+          ],
+        })),
+
+      removeArtwork: (id) =>
+        set((state) => ({
+          artworks: state.artworks.filter((a) => a.id !== id),
+        })),
+
+      updateArtwork: (id, updates) =>
+        set((state) => ({
+          artworks: state.artworks.map((a) =>
+            a.id === id ? { ...a, ...updates } : a
+          ),
+        })),
+
+      // Music Actions
+      toggleMusic: () =>
+        set((state) => ({
+          musicSettings: { ...state.musicSettings, isPlaying: !state.musicSettings.isPlaying },
+        })),
+
+      setVolume: (volume) =>
+        set((state) => ({
+          musicSettings: { ...state.musicSettings, volume },
+        })),
+
+      setTrack: (index) =>
+        set((state) => ({
+          musicSettings: { ...state.musicSettings, currentTrackIndex: index },
+        })),
+
+      setPlayerDesign: (design) =>
+        set((state) => ({
+          musicSettings: { ...state.musicSettings, playerDesign: design },
+        })),
+    }),
+    {
+      name: 'gallery-storage',
+      partialize: (state) => ({
+        artworks: state.artworks,
+        guestMessages: state.guestMessages,
+        gallerySettings: state.gallerySettings,
+        musicSettings: state.musicSettings,
+      }),
+    }
+  )
+);

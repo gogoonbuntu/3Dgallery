@@ -220,7 +220,7 @@ export function useControls() {
         }
 
         const state = inputState.current;
-        const MOVE_SPEED = 0.15;
+        const MOVE_SPEED = 0.0375; // Reduced to 1/4 of original speed
 
         // Keyboard movement
         if (state.keys.has('w') || state.keys.has('arrowup')) velocity.current.z -= MOVE_SPEED;

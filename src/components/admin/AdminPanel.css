@@ -1,0 +1,417 @@
+.admin-panel-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 150;
+    animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+.admin-panel {
+    background: white;
+    border-radius: 20px;
+    width: 90%;
+    max-width: 480px;
+    max-height: 85vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 25px 80px rgba(0, 0, 0, 0.3);
+    animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.admin-panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 24px;
+    border-bottom: 1px solid #eee;
+}
+
+.admin-panel-header h2 {
+    margin: 0;
+    font-size: 1.3rem;
+    color: #333;
+}
+
+.admin-panel-header .close-btn {
+    width: 36px;
+    height: 36px;
+    border: none;
+    background: #f0f0f0;
+    border-radius: 50%;
+    font-size: 1.5rem;
+    color: #666;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+.admin-tabs {
+    display: flex;
+    padding: 0 24px;
+    gap: 0;
+    border-bottom: 1px solid #eee;
+    background: #fafafa;
+}
+
+.admin-tabs button {
+    flex: 1;
+    padding: 14px 0;
+    border: none;
+    background: none;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #888;
+    cursor: pointer;
+    position: relative;
+    transition: all 0.2s ease;
+}
+
+.admin-tabs button.active {
+    color: #667eea;
+}
+
+.admin-tabs button.active::after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: 20%;
+    right: 20%;
+    height: 3px;
+    background: #667eea;
+    border-radius: 3px 3px 0 0;
+}
+
+.admin-panel-content {
+    padding: 24px;
+    overflow-y: auto;
+    flex: 1;
+}
+
+.setting-section {
+    margin-bottom: 28px;
+}
+
+.setting-section h3 {
+    margin: 0 0 14px;
+    font-size: 0.95rem;
+    color: #555;
+    font-weight: 600;
+}
+
+/* Color Options */
+.color-options {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.color-btn {
+    width: 40px;
+    height: 40px;
+    border: 3px solid #e0e0e0;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.color-btn.active {
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.3);
+}
+
+/* Option Buttons */
+.option-buttons {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.option-buttons.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+    gap: 8px;
+}
+
+.option-btn {
+    padding: 10px 18px;
+    border: 2px solid #e0e0e0;
+    background: white;
+    border-radius: 10px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.option-btn.small {
+    padding: 8px 12px;
+    font-size: 0.8rem;
+    text-align: left;
+}
+
+.option-btn.active {
+    border-color: #667eea;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+/* Slider */
+.slider-container {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.slider-container input[type="range"] {
+    flex: 1;
+    height: 6px;
+    border-radius: 3px;
+    background: #e0e0e0;
+}
+
+.slider-value {
+    min-width: 45px;
+    padding: 6px 10px;
+    background: #f5f5f5;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #667eea;
+    text-align: center;
+}
+
+/* Artworks Management */
+.artworks-management {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.add-artwork-trigger {
+    width: 100%;
+    padding: 12px;
+    border: 2px dashed #667eea;
+    border-radius: 12px;
+    background: rgba(102, 126, 234, 0.05);
+    color: #667eea;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.artworks-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.artwork-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px;
+    background: #f9f9f9;
+    border-radius: 12px;
+    border: 1px solid #eee;
+}
+
+.artwork-preview {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex: 1;
+}
+
+.artwork-preview img {
+    width: 44px;
+    height: 44px;
+    object-fit: cover;
+    border-radius: 8px;
+    background: #eee;
+}
+
+.artwork-brief {
+    display: flex;
+    flex-direction: column;
+}
+
+.artwork-brief .title {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #333;
+}
+
+.artwork-brief .details {
+    font-size: 0.75rem;
+    color: #888;
+}
+
+.item-actions {
+    display: flex;
+    gap: 6px;
+}
+
+.item-actions button {
+    padding: 6px 12px;
+    border: 1px solid #ddd;
+    background: white;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    cursor: pointer;
+}
+
+.item-actions button.delete-btn {
+    color: #ef4444;
+    border-color: #fee2e2;
+}
+
+.artwork-form.edit-card {
+    background: #fcfcfc;
+    border: 1px solid #667eea;
+    padding: 16px;
+    border-radius: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.1);
+}
+
+.input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.input-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+
+.input-group label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #888;
+}
+
+.input-group input,
+.input-group select {
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 0.85rem;
+}
+
+.form-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 4px;
+}
+
+.confirm-btn {
+    padding: 8px 16px;
+    border-radius: 10px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+}
+
+.confirm-btn.add {
+    background: #667eea;
+    color: white;
+    flex: 2;
+}
+
+.confirm-btn.cancel {
+    background: #eee;
+    color: #666;
+}
+
+/* Guestbook Management */
+.admin-messages-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.admin-message-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px;
+    background: #f9f9f9;
+    border-radius: 12px;
+    border: 1px solid #eee;
+}
+
+.message-info {
+    flex: 1;
+    margin-right: 10px;
+}
+
+.msg-nickname {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #667eea;
+    display: block;
+}
+
+.msg-content {
+    margin: 4px 0 0;
+    font-size: 0.85rem;
+    color: #333;
+}
+
+.delete-msg-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 1rem;
+}
+
+/* Footer */
+.admin-panel-footer {
+    padding: 16px;
+    border-top: 1px solid #eee;
+    background: #fafafa;
+}
+
+.save-note {
+    margin: 0;
+    font-size: 0.8rem;
+    color: #27ae60;
+    text-align: center;
+}
