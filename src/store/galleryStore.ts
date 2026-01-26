@@ -444,11 +444,10 @@ export const useGalleryStore = create<GalleryState>()(
     }),
     {
       name: 'gallery-storage',
+      // Only persist minimal data that doesn't conflict with Firebase
+      // Settings are managed by Firebase per exhibition, not localStorage
       partialize: (state) => ({
-        artworks: state.artworks,
-        guestMessages: state.guestMessages,
-        gallerySettings: state.gallerySettings,
-        musicSettings: state.musicSettings,
+        showTouchGuide: state.showTouchGuide,
       }),
     }
   )
