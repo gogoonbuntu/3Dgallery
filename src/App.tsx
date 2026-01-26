@@ -9,6 +9,7 @@ import { BottomNavigation } from './components/ui/BottomNavigation';
 import { CloseUpView } from './components/ui/CloseUpView';
 import { MusicPlayer } from './components/ui/MusicPlayer';
 import { PlayerCount } from './components/ui/PlayerCount';
+import { QRCodeShare } from './components/ui/QRCodeShare';
 import { AdminAuth } from './components/admin/AdminAuth';
 import { AdminPanel } from './components/admin/AdminPanel';
 import { SuperAdminPanel } from './components/admin/SuperAdminPanel';
@@ -160,6 +161,7 @@ function ExhibitionPage() {
       {!isCloseUpMode && <BottomNavigation />}
       <MusicPlayer />
       <CloseUpView />
+      <QRCodeShare />
 
       {/* Admin UI */}
       <AdminAuth />
