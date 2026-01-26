@@ -55,13 +55,20 @@ export function AdminPanel() {
         removeArtwork,
         updateArtwork,
         guestMessages,
-        removeGuestMessage
+        removeGuestMessage,
+        // Ads & Analytics
+        adSlots,
+        addAdSlot,
+        removeAdSlot,
+        artworkAnalytics,
+        visitorStats,
     } = useGalleryStore();
 
-    const [activeTab, setActiveTab] = useState<'settings' | 'artworks' | 'messages'>('settings');
+    const [activeTab, setActiveTab] = useState<'settings' | 'artworks' | 'messages' | 'stats' | 'ads'>('settings');
     const [confirmingId, setConfirmingId] = useState<string | null>(null);
     const [editingArtworkId, setEditingArtworkId] = useState<string | null>(null);
     const [isAddingArtwork, setIsAddingArtwork] = useState(false);
+    const [isDraggingLighting, setIsDraggingLighting] = useState(false);
 
     // Initial state for new artwork
     const [newArtwork, setNewArtwork] = useState<Omit<Artwork, 'id'>>({
@@ -96,7 +103,7 @@ export function AdminPanel() {
     };
 
     return (
-        <div className="admin-panel-overlay" onClick={toggleAdminPanel}>
+        <div className={`admin-panel-overlay ${isDraggingLighting ? 'preview-mode' : ''}`} onClick={toggleAdminPanel}>
             <div className="admin-panel" onClick={(e) => e.stopPropagation()}>
                 <div className="admin-panel-header">
                     <h2>⚙️ 관리자 모드</h2>
@@ -104,8 +111,10 @@ export function AdminPanel() {
                 </div>
 
                 <div className="admin-tabs">
-                    <button className={activeTab === 'settings' ? 'active' : ''} onClick={() => setActiveTab('settings')}>전체 설정</button>
-                    <button className={activeTab === 'artworks' ? 'active' : ''} onClick={() => setActiveTab('artworks')}>작품 관리</button>
+                    <button className={activeTab === 'stats' ? 'active' : ''} onClick={() => setActiveTab('stats')}>통계</button>
+                    <button className={activeTab === 'settings' ? 'active' : ''} onClick={() => setActiveTab('settings')}>설정</button>
+                    <button className={activeTab === 'artworks' ? 'active' : ''} onClick={() => setActiveTab('artworks')}>작품</button>
+                    <button className={activeTab === 'ads' ? 'active' : ''} onClick={() => setActiveTab('ads')}>광고</button>
                     <button className={activeTab === 'messages' ? 'active' : ''} onClick={() => setActiveTab('messages')}>방명록</button>
                 </div>
 
@@ -191,6 +200,150 @@ export function AdminPanel() {
                                         onChange={(e) => updateGallerySettings({ artworksPerWall: parseInt(e.target.value) })}
                                     />
                                     <span className="slider-value">{gallerySettings.artworksPerWall}개</span>
+                                </div>
+                            </section>
+
+                            <section className="setting-section lighting-section">
+                                <h3>💡 조명 컨트롤</h3>
+
+                                <div className="lighting-control">
+                                    <label>
+                                        <span className="control-label">🔆 전체 밝기</span>
+                                        <span className="control-value">{gallerySettings.lightingBrightness}%</span>
+                                    </label>
+                                    <div className="slider-with-labels">
+                                        <span className="label-left">어둡게</span>
+                                        <input
+                                            type="range"
+                                            min="10"
+                                            max="100"
+                                            value={gallerySettings.lightingBrightness}
+                                            onChange={(e) => updateGallerySettings({ lightingBrightness: parseInt(e.target.value) })}
+                                            onMouseDown={() => setIsDraggingLighting(true)}
+                                            onMouseUp={() => setIsDraggingLighting(false)}
+                                            onTouchStart={() => setIsDraggingLighting(true)}
+                                            onTouchEnd={() => setIsDraggingLighting(false)}
+                                        />
+                                        <span className="label-right">밝게</span>
+                                    </div>
+                                </div>
+
+                                <div className="lighting-control">
+                                    <label>
+                                        <span className="control-label">⚡ 조명 강도</span>
+                                        <span className="control-value">{gallerySettings.lightingIntensity}%</span>
+                                    </label>
+                                    <div className="slider-with-labels">
+                                        <span className="label-left">부드럽게</span>
+                                        <input
+                                            type="range"
+                                            min="10"
+                                            max="100"
+                                            value={gallerySettings.lightingIntensity}
+                                            onChange={(e) => updateGallerySettings({ lightingIntensity: parseInt(e.target.value) })}
+                                            onMouseDown={() => setIsDraggingLighting(true)}
+                                            onMouseUp={() => setIsDraggingLighting(false)}
+                                            onTouchStart={() => setIsDraggingLighting(true)}
+                                            onTouchEnd={() => setIsDraggingLighting(false)}
+                                        />
+                                        <span className="label-right">강하게</span>
+                                    </div>
+                                </div>
+
+                                <div className="lighting-control">
+                                    <label>
+                                        <span className="control-label">🌡️ 색온도</span>
+                                        <span className="control-value">
+                                            {gallerySettings.lightingColorTemp < 40 ? '차가움' :
+                                                gallerySettings.lightingColorTemp > 60 ? '따뜻함' : '중간'}
+                                        </span>
+                                    </label>
+                                    <div className="slider-with-labels color-temp">
+                                        <span className="label-left">🔵 차갑게</span>
+                                        <input
+                                            type="range"
+                                            min="0"
+                                            max="100"
+                                            value={gallerySettings.lightingColorTemp}
+                                            onChange={(e) => updateGallerySettings({ lightingColorTemp: parseInt(e.target.value) })}
+                                            onMouseDown={() => setIsDraggingLighting(true)}
+                                            onMouseUp={() => setIsDraggingLighting(false)}
+                                            onTouchStart={() => setIsDraggingLighting(true)}
+                                            onTouchEnd={() => setIsDraggingLighting(false)}
+                                            className="color-temp-slider"
+                                        />
+                                        <span className="label-right">🔴 따뜻하게</span>
+                                    </div>
+                                </div>
+
+                                <div className="lighting-control">
+                                    <label>
+                                        <span className="control-label">🌫️ 주변광 (앰비언트)</span>
+                                        <span className="control-value">{gallerySettings.ambientIntensity}%</span>
+                                    </label>
+                                    <div className="slider-with-labels">
+                                        <span className="label-left">그림자</span>
+                                        <input
+                                            type="range"
+                                            min="0"
+                                            max="100"
+                                            value={gallerySettings.ambientIntensity}
+                                            onChange={(e) => updateGallerySettings({ ambientIntensity: parseInt(e.target.value) })}
+                                            onMouseDown={() => setIsDraggingLighting(true)}
+                                            onMouseUp={() => setIsDraggingLighting(false)}
+                                            onTouchStart={() => setIsDraggingLighting(true)}
+                                            onTouchEnd={() => setIsDraggingLighting(false)}
+                                        />
+                                        <span className="label-right">균일</span>
+                                    </div>
+                                </div>
+
+                                <div className="lighting-presets">
+                                    <span className="presets-label">프리셋:</span>
+                                    <button
+                                        className="preset-btn"
+                                        onClick={() => updateGallerySettings({
+                                            lightingBrightness: 85,
+                                            lightingIntensity: 70,
+                                            lightingColorTemp: 50,
+                                            ambientIntensity: 50
+                                        })}
+                                    >
+                                        ☀️ 주간
+                                    </button>
+                                    <button
+                                        className="preset-btn"
+                                        onClick={() => updateGallerySettings({
+                                            lightingBrightness: 45,
+                                            lightingIntensity: 50,
+                                            lightingColorTemp: 70,
+                                            ambientIntensity: 25
+                                        })}
+                                    >
+                                        🌙 야간
+                                    </button>
+                                    <button
+                                        className="preset-btn"
+                                        onClick={() => updateGallerySettings({
+                                            lightingBrightness: 70,
+                                            lightingIntensity: 60,
+                                            lightingColorTemp: 55,
+                                            ambientIntensity: 40
+                                        })}
+                                    >
+                                        🏛️ 갤러리
+                                    </button>
+                                    <button
+                                        className="preset-btn"
+                                        onClick={() => updateGallerySettings({
+                                            lightingBrightness: 60,
+                                            lightingIntensity: 80,
+                                            lightingColorTemp: 35,
+                                            ambientIntensity: 20
+                                        })}
+                                    >
+                                        🎭 극적
+                                    </button>
                                 </div>
                             </section>
                         </>
@@ -328,6 +481,178 @@ export function AdminPanel() {
                                     </div>
                                 ))
                             )}
+                        </div>
+                    )}
+
+                    {/* Statistics Tab */}
+                    {activeTab === 'stats' && (
+                        <div className="stats-dashboard">
+                            <section className="stats-overview">
+                                <h3>📈 방문 통계</h3>
+                                <div className="stats-grid">
+                                    <div className="stat-card">
+                                        <span className="stat-value">{visitorStats.totalVisits}</span>
+                                        <span className="stat-label">총 방문</span>
+                                    </div>
+                                    <div className="stat-card">
+                                        <span className="stat-value">{visitorStats.todayVisits}</span>
+                                        <span className="stat-label">오늘 방문</span>
+                                    </div>
+                                    <div className="stat-card">
+                                        <span className="stat-value">{visitorStats.uniqueVisitors}</span>
+                                        <span className="stat-label">고유 방문자</span>
+                                    </div>
+                                    <div className="stat-card">
+                                        <span className="stat-value">
+                                            {Math.round(visitorStats.averageSessionMs / 60000)}분
+                                        </span>
+                                        <span className="stat-label">평균 체류</span>
+                                    </div>
+                                </div>
+                            </section>
+
+                            <section className="stats-artworks">
+                                <h3>🖼️ 작품별 통계</h3>
+                                {artworkAnalytics.length === 0 ? (
+                                    <p className="empty-note">아직 수집된 데이터가 없습니다.</p>
+                                ) : (
+                                    <div className="artwork-stats-list">
+                                        {artworkAnalytics
+                                            .sort((a, b) => b.clicks - a.clicks)
+                                            .map((stat) => {
+                                                const artwork = artworks.find(a => a.id === stat.artworkId);
+                                                return (
+                                                    <div key={stat.artworkId} className="artwork-stat-item">
+                                                        <div className="artwork-stat-info">
+                                                            <span className="artwork-title">
+                                                                {artwork?.title || '알 수 없는 작품'}
+                                                            </span>
+                                                            <span className="artwork-artist">{artwork?.artist}</span>
+                                                        </div>
+                                                        <div className="artwork-stat-metrics">
+                                                            <div className="metric">
+                                                                <span className="metric-value">{stat.clicks}</span>
+                                                                <span className="metric-label">클릭</span>
+                                                            </div>
+                                                            <div className="metric">
+                                                                <span className="metric-value">
+                                                                    {Math.round(stat.totalViewTimeMs / 1000)}초
+                                                                </span>
+                                                                <span className="metric-label">조회시간</span>
+                                                            </div>
+                                                        </div>
+                                                        <div className="click-bar">
+                                                            <div
+                                                                className="click-bar-fill"
+                                                                style={{
+                                                                    width: `${Math.min(100, (stat.clicks / Math.max(...artworkAnalytics.map(a => a.clicks))) * 100)}%`
+                                                                }}
+                                                            />
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })}
+                                    </div>
+                                )}
+                            </section>
+                        </div>
+                    )}
+
+                    {/* Ads Management Tab */}
+                    {activeTab === 'ads' && (
+                        <div className="ads-management">
+                            <section className="add-ad-section">
+                                <h3>➕ 새 광고 추가</h3>
+                                <div className="add-ad-form">
+                                    <input
+                                        type="text"
+                                        placeholder="광고 제목"
+                                        id="ad-title"
+                                    />
+                                    <input
+                                        type="url"
+                                        placeholder="이미지 URL"
+                                        id="ad-image"
+                                    />
+                                    <input
+                                        type="url"
+                                        placeholder="클릭 시 이동할 링크"
+                                        id="ad-link"
+                                    />
+                                    <div className="ad-position-row">
+                                        <select id="ad-wall" defaultValue="D">
+                                            <option value="A">벽 A</option>
+                                            <option value="B">벽 B</option>
+                                            <option value="C">벽 C</option>
+                                            <option value="D">입구 벽</option>
+                                        </select>
+                                        <input type="number" placeholder="X 위치" id="ad-x" defaultValue="0" />
+                                        <input type="number" placeholder="Y 위치" id="ad-y" defaultValue="2" />
+                                    </div>
+                                    <button
+                                        className="add-ad-btn"
+                                        onClick={() => {
+                                            const title = (document.getElementById('ad-title') as HTMLInputElement).value;
+                                            const imageUrl = (document.getElementById('ad-image') as HTMLInputElement).value;
+                                            const linkUrl = (document.getElementById('ad-link') as HTMLInputElement).value;
+                                            const wall = (document.getElementById('ad-wall') as HTMLSelectElement).value as 'A' | 'B' | 'C' | 'D';
+                                            const x = parseFloat((document.getElementById('ad-x') as HTMLInputElement).value) || 0;
+                                            const y = parseFloat((document.getElementById('ad-y') as HTMLInputElement).value) || 2;
+
+                                            if (!title || !imageUrl) {
+                                                alert('제목과 이미지 URL은 필수입니다.');
+                                                return;
+                                            }
+
+                                            addAdSlot({
+                                                title,
+                                                imageUrl,
+                                                linkUrl,
+                                                wall,
+                                                position: { x, y },
+                                                size: { width: 2, height: 1.5 },
+                                                isActive: true,
+                                            });
+
+                                            // Clear form
+                                            (document.getElementById('ad-title') as HTMLInputElement).value = '';
+                                            (document.getElementById('ad-image') as HTMLInputElement).value = '';
+                                            (document.getElementById('ad-link') as HTMLInputElement).value = '';
+                                        }}
+                                    >
+                                        광고 추가
+                                    </button>
+                                </div>
+                            </section>
+
+                            <section className="ads-list-section">
+                                <h3>📋 광고 목록 ({adSlots.length}개)</h3>
+                                {adSlots.length === 0 ? (
+                                    <p className="empty-note">등록된 광고가 없습니다.</p>
+                                ) : (
+                                    <div className="ads-list">
+                                        {adSlots.map((ad) => (
+                                            <div key={ad.id} className="ad-item">
+                                                <div className="ad-preview">
+                                                    <img src={ad.imageUrl} alt={ad.title} />
+                                                </div>
+                                                <div className="ad-info">
+                                                    <span className="ad-title">{ad.title}</span>
+                                                    <span className="ad-position">
+                                                        벽 {ad.wall} ({ad.position.x}, {ad.position.y})
+                                                    </span>
+                                                </div>
+                                                <button
+                                                    className="remove-ad-btn"
+                                                    onClick={() => removeAdSlot(ad.id)}
+                                                >
+                                                    삭제
+                                                </button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </section>
                         </div>
                     )}
                 </div>

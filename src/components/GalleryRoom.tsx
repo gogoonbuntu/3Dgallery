@@ -250,11 +250,66 @@ export function GalleryRoom() {
             <Wall position={[0, roomSize.height / 2, roomSize.depth / 2]} rotation={[0, Math.PI, 0]} size={[roomSize.width, roomSize.height]} color={wallColor} texture={wallTexture} />
             <Wall position={[-roomSize.width / 2, roomSize.height / 2, 0]} rotation={[0, Math.PI / 2, 0]} size={[roomSize.depth, roomSize.height]} color={wallColor} texture={wallTexture} />
 
-            {/* Optimized Lights - reduced from 5 point lights to 3 */}
-            <pointLight position={[0, 4.5, 0]} intensity={120} color="#ffffff" castShadow />
-            <pointLight position={[-4, 4, 0]} intensity={60} color="#fff5e6" />
-            <pointLight position={[4, 4, 0]} intensity={60} color="#fff5e6" />
-            <ambientLight intensity={0.4} />
+            {/* Dynamic Lighting based on gallery settings */}
+            {(() => {
+                // Calculate lighting values from settings (0-100 scale to actual values)
+                const brightness = gallerySettings.lightingBrightness / 100;
+                const intensity = gallerySettings.lightingIntensity / 100;
+                const colorTemp = gallerySettings.lightingColorTemp / 100;
+                const ambientLevel = gallerySettings.ambientIntensity / 100;
+
+                // Color temperature: 0 = cool blue, 0.5 = neutral white, 1 = warm orange
+                const getLightColor = (temp: number) => {
+                    if (temp < 0.5) {
+                        // Cool (blue tinted)
+                        const t = temp * 2; // 0-1
+                        const r = Math.round(200 + t * 55);
+                        const g = Math.round(220 + t * 35);
+                        const b = 255;
+                        return `rgb(${r}, ${g}, ${b})`;
+                    } else {
+                        // Warm (orange/yellow tinted)
+                        const t = (temp - 0.5) * 2; // 0-1
+                        const r = 255;
+                        const g = Math.round(255 - t * 30);
+                        const b = Math.round(255 - t * 80);
+                        return `rgb(${r}, ${g}, ${b})`;
+                    }
+                };
+
+                const mainLightColor = getLightColor(colorTemp);
+                const accentLightColor = getLightColor(Math.min(1, colorTemp + 0.1));
+
+                // Main ceiling light - intensity affected by brightness and intensity
+                const mainIntensity = 80 * brightness * intensity * 2;
+                const sideIntensity = 40 * brightness * intensity * 2;
+                const ambientIntensity = 0.6 * ambientLevel;
+
+                return (
+                    <>
+                        {/* Main ceiling light */}
+                        <pointLight
+                            position={[0, 4.5, 0]}
+                            intensity={mainIntensity}
+                            color={mainLightColor}
+                            castShadow
+                        />
+                        {/* Side accent lights */}
+                        <pointLight
+                            position={[-4, 4, 0]}
+                            intensity={sideIntensity}
+                            color={accentLightColor}
+                        />
+                        <pointLight
+                            position={[4, 4, 0]}
+                            intensity={sideIntensity}
+                            color={accentLightColor}
+                        />
+                        {/* Ambient fill light */}
+                        <ambientLight intensity={ambientIntensity} />
+                    </>
+                );
+            })()}
         </group>
     );
 }

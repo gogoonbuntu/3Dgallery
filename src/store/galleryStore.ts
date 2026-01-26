@@ -32,6 +32,7 @@ export interface GuestMessage {
   nickname: string;
   content: string;
   createdAt: Date;
+  likes: number;
 }
 
 export interface GallerySettings {
@@ -40,6 +41,11 @@ export interface GallerySettings {
   floorTexture: 'wood' | 'marble' | 'concrete' | 'stone' | 'herringbone' | 'carpet';
   frameStyle: FrameStyle;
   artworksPerWall: number;
+  // Lighting settings
+  lightingBrightness: number;  // 0-100, overall brightness
+  lightingIntensity: number;   // 0-100, light intensity/strength
+  lightingColorTemp: number;   // 0-100, 0=cool(blue), 50=neutral, 100=warm(orange)
+  ambientIntensity: number;    // 0-100, ambient light level
 }
 
 export type PlayerDesign = 'speaker' | 'lp';
@@ -49,9 +55,41 @@ export interface MusicSettings {
   volume: number;
   currentTrackIndex: number;
   playerDesign: PlayerDesign;
+  youtubeUrl: string;
 }
 
+// Advertisement slot
+export interface AdSlot {
+  id: string;
+  imageUrl: string;
+  linkUrl: string;
+  title: string;
+  wall: 'A' | 'B' | 'C' | 'D';  // D = entrance wall
+  position: { x: number; y: number };
+  size: { width: number; height: number };
+  isActive: boolean;
+}
+
+// Analytics for individual artwork
+export interface ArtworkAnalytics {
+  artworkId: string;
+  clicks: number;
+  totalViewTimeMs: number;
+  lastViewed: string;
+}
+
+// Exhibition visitor statistics
+export interface VisitorStats {
+  totalVisits: number;
+  uniqueVisitors: number;
+  todayVisits: number;
+  averageSessionMs: number;
+  lastUpdated: string;
+}
 interface GalleryState {
+  // Exhibition
+  currentExhibitionCode: string;
+
   // Artworks
   artworks: Artwork[];
   selectedArtwork: Artwork | null;
@@ -60,6 +98,13 @@ interface GalleryState {
   // Guestbook
   guestMessages: GuestMessage[];
   isGuestbookOpen: boolean;
+
+  // Ads
+  adSlots: AdSlot[];
+
+  // Analytics
+  artworkAnalytics: ArtworkAnalytics[];
+  visitorStats: VisitorStats;
 
   // UI
   showTouchGuide: boolean;
@@ -71,12 +116,16 @@ interface GalleryState {
   gallerySettings: GallerySettings;
   musicSettings: MusicSettings;
 
+  // Exhibition Actions
+  setExhibitionCode: (code: string) => void;
+
   // Actions
   selectArtwork: (artwork: Artwork | null) => void;
   enterCloseUpMode: () => void;
   exitCloseUpMode: () => void;
   addGuestMessage: (nickname: string, content: string) => void;
   removeGuestMessage: (id: string) => void;
+  likeGuestMessage: (id: string) => void;
   toggleGuestbook: () => void;
   dismissTouchGuide: () => void;
 
@@ -88,11 +137,22 @@ interface GalleryState {
   removeArtwork: (id: string) => void;
   updateArtwork: (id: string, updates: Partial<Artwork>) => void;
 
+  // Ad Actions
+  addAdSlot: (ad: Omit<AdSlot, 'id'>) => void;
+  removeAdSlot: (id: string) => void;
+  updateAdSlot: (id: string, updates: Partial<AdSlot>) => void;
+
+  // Analytics Actions
+  trackArtworkClick: (artworkId: string) => void;
+  trackArtworkView: (artworkId: string, durationMs: number) => void;
+  incrementVisitorCount: () => void;
+
   // Music Actions
   toggleMusic: () => void;
   setVolume: (volume: number) => void;
   setTrack: (index: number) => void;
   setPlayerDesign: (design: PlayerDesign) => void;
+  setYoutubeUrl: (url: string) => void;
 }
 
 // Sample artworks
@@ -156,12 +216,14 @@ const sampleMessages: GuestMessage[] = [
     nickname: '관람객1',
     content: '정말 아름다운 전시였습니다!',
     createdAt: new Date('2024-01-10'),
+    likes: 12,
   },
   {
     id: '2',
     nickname: '미술애호가',
     content: '작가님의 색감 사용이 인상적이네요.',
     createdAt: new Date('2024-01-11'),
+    likes: 8,
   },
 ];
 
@@ -171,6 +233,11 @@ const defaultSettings: GallerySettings = {
   floorTexture: 'wood',
   frameStyle: 'classic',
   artworksPerWall: 2,
+  // Default lighting settings (gallery standard)
+  lightingBrightness: 70,
+  lightingIntensity: 60,
+  lightingColorTemp: 55,  // Slightly warm
+  ambientIntensity: 40,
 };
 
 const defaultMusicSettings: MusicSettings = {
@@ -178,11 +245,13 @@ const defaultMusicSettings: MusicSettings = {
   volume: 0.5,
   currentTrackIndex: 0,
   playerDesign: 'speaker',
+  youtubeUrl: '',
 };
 
 export const useGalleryStore = create<GalleryState>()(
   persist(
     (set) => ({
+      currentExhibitionCode: 'default',
       artworks: sampleArtworks,
       selectedArtwork: null,
       isCloseUpMode: false,
@@ -194,6 +263,19 @@ export const useGalleryStore = create<GalleryState>()(
       isAdminPanelOpen: false,
       gallerySettings: defaultSettings,
       musicSettings: defaultMusicSettings,
+
+      // Ads & Analytics initial state
+      adSlots: [],
+      artworkAnalytics: [],
+      visitorStats: {
+        totalVisits: 0,
+        uniqueVisitors: 0,
+        todayVisits: 0,
+        averageSessionMs: 0,
+        lastUpdated: new Date().toISOString(),
+      },
+
+      setExhibitionCode: (code) => set({ currentExhibitionCode: code }),
 
       selectArtwork: (artwork) =>
         set({ selectedArtwork: artwork, showArtworkPanel: artwork !== null }),
@@ -211,8 +293,16 @@ export const useGalleryStore = create<GalleryState>()(
               nickname: nickname || '익명',
               content,
               createdAt: new Date(),
+              likes: 0,
             },
           ],
+        })),
+
+      likeGuestMessage: (id) =>
+        set((state) => ({
+          guestMessages: state.guestMessages.map((m) =>
+            m.id === id ? { ...m, likes: (m.likes || 0) + 1 } : m
+          ),
         })),
 
       removeGuestMessage: (id) =>
@@ -254,6 +344,78 @@ export const useGalleryStore = create<GalleryState>()(
           ),
         })),
 
+      // Ad Actions
+      addAdSlot: (ad) =>
+        set((state) => ({
+          adSlots: [
+            ...state.adSlots,
+            { ...ad, id: Date.now().toString() },
+          ],
+        })),
+
+      removeAdSlot: (id) =>
+        set((state) => ({
+          adSlots: state.adSlots.filter((a) => a.id !== id),
+        })),
+
+      updateAdSlot: (id, updates) =>
+        set((state) => ({
+          adSlots: state.adSlots.map((a) =>
+            a.id === id ? { ...a, ...updates } : a
+          ),
+        })),
+
+      // Analytics Actions
+      trackArtworkClick: (artworkId) =>
+        set((state) => {
+          const existing = state.artworkAnalytics.find(a => a.artworkId === artworkId);
+          if (existing) {
+            return {
+              artworkAnalytics: state.artworkAnalytics.map(a =>
+                a.artworkId === artworkId
+                  ? { ...a, clicks: a.clicks + 1, lastViewed: new Date().toISOString() }
+                  : a
+              ),
+            };
+          }
+          return {
+            artworkAnalytics: [
+              ...state.artworkAnalytics,
+              { artworkId, clicks: 1, totalViewTimeMs: 0, lastViewed: new Date().toISOString() },
+            ],
+          };
+        }),
+
+      trackArtworkView: (artworkId, durationMs) =>
+        set((state) => {
+          const existing = state.artworkAnalytics.find(a => a.artworkId === artworkId);
+          if (existing) {
+            return {
+              artworkAnalytics: state.artworkAnalytics.map(a =>
+                a.artworkId === artworkId
+                  ? { ...a, totalViewTimeMs: a.totalViewTimeMs + durationMs, lastViewed: new Date().toISOString() }
+                  : a
+              ),
+            };
+          }
+          return {
+            artworkAnalytics: [
+              ...state.artworkAnalytics,
+              { artworkId, clicks: 0, totalViewTimeMs: durationMs, lastViewed: new Date().toISOString() },
+            ],
+          };
+        }),
+
+      incrementVisitorCount: () =>
+        set((state) => ({
+          visitorStats: {
+            ...state.visitorStats,
+            totalVisits: state.visitorStats.totalVisits + 1,
+            todayVisits: state.visitorStats.todayVisits + 1,
+            lastUpdated: new Date().toISOString(),
+          },
+        })),
+
       // Music Actions
       toggleMusic: () =>
         set((state) => ({
@@ -273,6 +435,11 @@ export const useGalleryStore = create<GalleryState>()(
       setPlayerDesign: (design) =>
         set((state) => ({
           musicSettings: { ...state.musicSettings, playerDesign: design },
+        })),
+
+      setYoutubeUrl: (url) =>
+        set((state) => ({
+          musicSettings: { ...state.musicSettings, youtubeUrl: url },
         })),
     }),
     {

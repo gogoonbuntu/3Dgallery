@@ -1,10 +1,47 @@
+import { useEffect, useRef } from 'react';
 import { useGalleryStore } from '../../store/galleryStore';
 import { useDeviceDetect } from '../../hooks/useDeviceDetect';
 import './CloseUpView.css';
 
 export function CloseUpView() {
-    const { isCloseUpMode, selectedArtwork, exitCloseUpMode } = useGalleryStore();
+    const { isCloseUpMode, selectedArtwork, exitCloseUpMode, trackArtworkView } = useGalleryStore();
     const { isMobile } = useDeviceDetect();
+
+    const viewStartTime = useRef<number | null>(null);
+    const trackedArtworkId = useRef<string | null>(null);
+
+    const artworkId = selectedArtwork?.id ?? null;
+
+    // Track close-up view time
+    useEffect(() => {
+        if (isCloseUpMode && artworkId) {
+            // Start tracking close-up view time
+            viewStartTime.current = Date.now();
+            trackedArtworkId.current = artworkId;
+        } else {
+            // Close-up mode ended - save view time
+            if (viewStartTime.current && trackedArtworkId.current) {
+                const duration = Date.now() - viewStartTime.current;
+                if (duration > 500) {
+                    trackArtworkView(trackedArtworkId.current, duration);
+                }
+                viewStartTime.current = null;
+                trackedArtworkId.current = null;
+            }
+        }
+    }, [isCloseUpMode, artworkId, trackArtworkView]);
+
+    // Cleanup on unmount
+    useEffect(() => {
+        return () => {
+            if (viewStartTime.current && trackedArtworkId.current) {
+                const duration = Date.now() - viewStartTime.current;
+                if (duration > 500) {
+                    useGalleryStore.getState().trackArtworkView(trackedArtworkId.current, duration);
+                }
+            }
+        };
+    }, []);
 
     if (!isCloseUpMode || !selectedArtwork) return null;
 

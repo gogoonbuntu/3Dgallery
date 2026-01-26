@@ -5,6 +5,7 @@ import { GuestbookWall } from './GuestbookWall';
 import { CloseUpCamera } from './CloseUpCamera';
 import { MusicPlayer3D } from './MusicPlayer3D';
 import { OtherPlayers } from './OtherPlayers';
+import { AdSlots } from './AdSlots';
 import { useControls } from '../hooks/useTouchControls';
 import { usePlayerPositionSync } from '../hooks/usePlayerPositionSync';
 import { useGalleryStore } from '../store/galleryStore';
@@ -39,6 +40,7 @@ export function Scene() {
             <GalleryRoom />
             <Suspense fallback={<LoadingBox />}>
                 <ArtworkCollection />
+                <AdSlots />
             </Suspense>
             <GuestbookWall />
             <MusicPlayer3D />
@@ -46,4 +48,3 @@ export function Scene() {
         </>
     );
 }
-

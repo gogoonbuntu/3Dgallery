@@ -151,3 +151,108 @@
         min-width: 150px;
     }
 }
+
+/* Source Toggle */
+.source-toggle {
+    display: flex;
+    justify-content: center;
+    gap: 4px;
+    margin-bottom: 10px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    padding: 4px;
+}
+
+.source-toggle button {
+    flex: 1;
+    background: transparent;
+    border: none;
+    padding: 6px 8px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 11px;
+    color: #aaa;
+    transition: all 0.2s;
+}
+
+.source-toggle button:hover {
+    color: #fff;
+}
+
+.source-toggle button.active {
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    color: #fff;
+    box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
+}
+
+/* YouTube Input Section */
+.youtube-input-section {
+    margin-bottom: 10px;
+}
+
+.youtube-input-wrapper {
+    display: flex;
+    gap: 4px;
+    align-items: center;
+}
+
+.youtube-input {
+    flex: 1;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 8px;
+    padding: 8px 10px;
+    font-size: 11px;
+    color: #fff;
+    outline: none;
+    transition: all 0.2s;
+}
+
+.youtube-input::placeholder {
+    color: #666;
+}
+
+.youtube-input:focus {
+    border-color: #6366f1;
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.youtube-submit-btn,
+.youtube-clear-btn {
+    width: 28px;
+    height: 28px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+.youtube-submit-btn {
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: #fff;
+}
+
+.youtube-submit-btn:hover {
+    transform: scale(1.05);
+    box-shadow: 0 2px 8px rgba(16, 185, 129, 0.4);
+}
+
+.youtube-clear-btn {
+    background: rgba(239, 68, 68, 0.8);
+    color: #fff;
+}
+
+.youtube-clear-btn:hover {
+    background: rgba(239, 68, 68, 1);
+}
+
+.youtube-status {
+    font-size: 10px;
+    color: #10b981;
+    text-align: center;
+    margin-top: 6px;
+}

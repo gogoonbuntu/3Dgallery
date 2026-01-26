@@ -31,6 +31,7 @@ const ArtworkItem = memo(function ArtworkItem({ artwork }: ArtworkProps) {
     // 선택적 구독: 필요한 상태만 구독하여 리렌더링 최소화
     const selectArtwork = useGalleryStore((state) => state.selectArtwork);
     const enterCloseUpMode = useGalleryStore((state) => state.enterCloseUpMode);
+    const trackArtworkClick = useGalleryStore((state) => state.trackArtworkClick);
     const selectedArtworkId = useGalleryStore((state) => state.selectedArtwork?.id);
     const frameStyle = useGalleryStore((state) => state.gallerySettings.frameStyle);
 
@@ -85,7 +86,8 @@ const ArtworkItem = memo(function ArtworkItem({ artwork }: ArtworkProps) {
     const handleClick = useCallback((e: ThreeEvent<MouseEvent>) => {
         e.stopPropagation();
         selectArtwork(artwork);
-    }, [selectArtwork, artwork]);
+        trackArtworkClick(artwork.id);
+    }, [selectArtwork, trackArtworkClick, artwork]);
 
     const handleDoubleClick = useCallback((e: ThreeEvent<MouseEvent>) => {
         e.stopPropagation();

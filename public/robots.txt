@@ -1,0 +1,9 @@
+# 3D Gallery Robots.txt
+User-agent: *
+Allow: /
+
+# Sitemap
+Sitemap: https://your-domain.com/sitemap.xml
+
+# Disallow admin pages from indexing
+Disallow: /super-admin

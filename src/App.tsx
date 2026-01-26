@@ -1,4 +1,5 @@
 import { Suspense, useEffect, useState, useCallback, useRef } from 'react';
+import { Routes, Route, useParams, Navigate } from 'react-router-dom';
 import { Canvas } from '@react-three/fiber';
 import { Scene } from './components/Scene';
 import { ArtworkInfoPanel } from './components/ui/ArtworkInfoPanel';
@@ -10,6 +11,7 @@ import { MusicPlayer } from './components/ui/MusicPlayer';
 import { PlayerCount } from './components/ui/PlayerCount';
 import { AdminAuth } from './components/admin/AdminAuth';
 import { AdminPanel } from './components/admin/AdminPanel';
+import { SuperAdminPanel } from './components/admin/SuperAdminPanel';
 import { useGalleryStore } from './store/galleryStore';
 import { useFirebaseSync } from './hooks/useFirebaseSync';
 import { useMultiplayerSync } from './hooks/useMultiplayerSync';
@@ -40,14 +42,23 @@ function ErrorScreen({ onRetry, autoRetrying }: { onRetry: () => void; autoRetry
   );
 }
 
-function App() {
-  const { isCloseUpMode, exitCloseUpMode, isAdmin, isAdminPanelOpen } = useGalleryStore();
+// Exhibition page component
+function ExhibitionPage() {
+  const { code } = useParams<{ code: string }>();
+  const { setExhibitionCode, isCloseUpMode, exitCloseUpMode, isAdmin, isAdminPanelOpen } = useGalleryStore();
   const [contextLost, setContextLost] = useState(false);
   const [canvasKey, setCanvasKey] = useState(0);
   const [isReady, setIsReady] = useState(false);
   const [autoRetrying, setAutoRetrying] = useState(false);
   const retryCount = useRef(0);
   const maxAutoRetries = 2;
+
+  // Set exhibition code from URL
+  useEffect(() => {
+    if (code) {
+      setExhibitionCode(code);
+    }
+  }, [code, setExhibitionCode]);
 
   // Initialize Firebase sync
   useFirebaseSync();
@@ -93,7 +104,7 @@ function App() {
   }, [contextLost]);
 
   const handleRetry = useCallback(() => {
-    retryCount.current = 0; // Reset retry count on manual retry
+    retryCount.current = 0;
     setContextLost(false);
     setCanvasKey(prev => prev + 1);
   }, []);
@@ -127,8 +138,6 @@ function App() {
               dpr={Math.min(window.devicePixelRatio, 1.5)}
               onCreated={({ gl }) => {
                 gl.setClearColor('#1a1a1a');
-
-                // Handle WebGL context loss
                 const canvas = gl.domElement;
                 canvas.addEventListener('webglcontextlost', handleContextLost);
                 canvas.addEventListener('webglcontextrestored', () => {
@@ -156,6 +165,22 @@ function App() {
       <AdminAuth />
       {isAdmin && <AdminPanel />}
     </div>
+  );
+}
+
+// Main App with routing
+function App() {
+  return (
+    <Routes>
+      {/* Super Admin page */}
+      <Route path="/super-admin" element={<SuperAdminPanel />} />
+
+      {/* Exhibition page with code */}
+      <Route path="/:code" element={<ExhibitionPage />} />
+
+      {/* Default redirect to default exhibition */}
+      <Route path="/" element={<Navigate to="/default" replace />} />
+    </Routes>
   );
 }
 

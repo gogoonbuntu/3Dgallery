@@ -210,9 +210,27 @@ export function MusicPlayer3D() {
     const { musicSettings, toggleMusic, setTrack } = useGalleryStore();
 
     const audioRef = useRef<HTMLAudioElement | null>(null);
+    const youtubePlayerRef = useRef<any>(null);
     const [audioReady, setAudioReady] = useState(false);
-    const { isPlaying, volume, currentTrackIndex, playerDesign } = musicSettings;
+    const { isPlaying, volume, currentTrackIndex, playerDesign, youtubeUrl } = musicSettings;
 
+    // Extract YouTube Video ID from URL
+    const getYoutubeVideoId = (url: string): string | null => {
+        if (!url) return null;
+        const patterns = [
+            /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\n?#]+)/,
+            /youtube\.com\/shorts\/([^&\n?#]+)/,
+        ];
+        for (const pattern of patterns) {
+            const match = url.match(pattern);
+            if (match) return match[1];
+        }
+        return null;
+    };
+
+    const videoId = getYoutubeVideoId(youtubeUrl);
+
+    // Initialize HTML Audio for MP3 tracks
     useEffect(() => {
         audioRef.current = new Audio();
         audioRef.current.loop = false;
@@ -233,28 +251,94 @@ export function MusicPlayer3D() {
         };
     }, []);
 
+    // Handle MP3 track changes (only when not using YouTube)
     useEffect(() => {
-        if (audioRef.current && audioReady) {
+        if (audioRef.current && audioReady && !videoId) {
             audioRef.current.src = MUSIC_TRACKS[currentTrackIndex].url;
             if (isPlaying) {
                 audioRef.current.play().catch(console.error);
             }
         }
-    }, [currentTrackIndex, audioReady]);
+    }, [currentTrackIndex, audioReady, videoId]);
 
+    // Handle play/pause for MP3 (only when not using YouTube)
     useEffect(() => {
-        if (audioRef.current && audioReady) {
+        if (audioRef.current && audioReady && !videoId) {
             if (isPlaying) {
+                // Make sure YouTube is stopped when MP3 plays
+                if (youtubePlayerRef.current) {
+                    try {
+                        youtubePlayerRef.current.pauseVideo();
+                    } catch (e) {
+                        // Player might not be ready
+                    }
+                }
                 audioRef.current.play().catch(console.error);
             } else {
                 audioRef.current.pause();
             }
         }
-    }, [isPlaying, audioReady]);
+    }, [isPlaying, audioReady, videoId]);
 
+    // Handle volume for MP3
     useEffect(() => {
         if (audioRef.current) {
             audioRef.current.volume = volume;
+        }
+    }, [volume]);
+
+    // Stop MP3 when YouTube is active
+    useEffect(() => {
+        if (videoId && audioRef.current) {
+            audioRef.current.pause();
+        }
+    }, [videoId]);
+
+    // Stop YouTube when switching to track mode
+    useEffect(() => {
+        if (!videoId && youtubePlayerRef.current) {
+            try {
+                youtubePlayerRef.current.pauseVideo();
+            } catch (e) {
+                // Player might not be ready
+            }
+        }
+    }, [videoId]);
+
+    // YouTube player event handlers
+    const onYoutubeReady = (event: { target: any }) => {
+        youtubePlayerRef.current = event.target;
+        event.target.setVolume(volume * 100);
+        if (isPlaying) {
+            event.target.playVideo();
+        }
+    };
+
+    const onYoutubeStateChange = (event: { data: number }) => {
+        // YT.PlayerState.ENDED = 0
+        if (event.data === 0) {
+            // Video ended - could loop or stop
+        }
+    };
+
+    // Control YouTube player - only when in YouTube mode
+    useEffect(() => {
+        if (youtubePlayerRef.current && videoId) {
+            if (isPlaying) {
+                // Make sure MP3 is stopped when YouTube plays
+                if (audioRef.current) {
+                    audioRef.current.pause();
+                }
+                youtubePlayerRef.current.playVideo();
+            } else {
+                youtubePlayerRef.current.pauseVideo();
+            }
+        }
+    }, [isPlaying, videoId]);
+
+    useEffect(() => {
+        if (youtubePlayerRef.current) {
+            youtubePlayerRef.current.setVolume(volume * 100);
         }
     }, [volume]);
 
@@ -270,35 +354,126 @@ export function MusicPlayer3D() {
     const rotation: [number, number, number] = [0, Math.PI / 2, 0];
 
     return (
-        <group position={position} rotation={rotation} onClick={handleClick}>
-            {playerDesign === 'speaker' ? (
-                <Speaker3D isPlaying={isPlaying} />
-            ) : (
-                <LPTable3D isPlaying={isPlaying} />
+        <>
+            {/* Hidden YouTube Player */}
+            {videoId && (
+                <YoutubePlayerPortal
+                    videoId={videoId}
+                    onReady={onYoutubeReady}
+                    onStateChange={onYoutubeStateChange}
+                />
             )}
 
-            {/* Invisible Clickable Area */}
-            <mesh position={[0, 0.6, 0]} visible={false}>
-                <boxGeometry args={[1.0, 1.4, 0.8]} />
-                <meshBasicMaterial transparent opacity={0} />
-            </mesh>
+            <group position={position} rotation={rotation} onClick={handleClick}>
+                {playerDesign === 'speaker' ? (
+                    <Speaker3D isPlaying={isPlaying} />
+                ) : (
+                    <LPTable3D isPlaying={isPlaying} />
+                )}
 
-            {/* Spotlight */}
-            <spotLight
-                position={[0.5, 2.5, 1]}
-                angle={0.5}
-                penumbra={0.6}
-                intensity={isPlaying ? 80 : 40}
-                color="#fff5e0"
-            />
+                {/* Invisible Clickable Area */}
+                <mesh position={[0, 0.6, 0]} visible={false}>
+                    <boxGeometry args={[1.0, 1.4, 0.8]} />
+                    <meshBasicMaterial transparent opacity={0} />
+                </mesh>
 
-            {/* Ambient fill light */}
-            <pointLight
-                position={[0, 1, 0.5]}
-                intensity={isPlaying ? 15 : 8}
-                color="#ffe4c4"
-                distance={3}
-            />
-        </group>
+                {/* Spotlight */}
+                <spotLight
+                    position={[0.5, 2.5, 1]}
+                    angle={0.5}
+                    penumbra={0.6}
+                    intensity={isPlaying ? 80 : 40}
+                    color="#fff5e0"
+                />
+
+                {/* Ambient fill light */}
+                <pointLight
+                    position={[0, 1, 0.5]}
+                    intensity={isPlaying ? 15 : 8}
+                    color="#ffe4c4"
+                    distance={3}
+                />
+            </group>
+        </>
     );
 }
+
+// Portal component to render YouTube player in DOM
+function YoutubePlayerPortal({
+    videoId,
+    onReady,
+    onStateChange
+}: {
+    videoId: string;
+    onReady: (event: { target: any }) => void;
+    onStateChange: (event: { data: number }) => void;
+}) {
+    useEffect(() => {
+        // Create container for YouTube player
+        let container = document.getElementById('youtube-player-container');
+        if (!container) {
+            container = document.createElement('div');
+            container.id = 'youtube-player-container';
+            container.style.cssText = 'position:fixed;top:-9999px;left:-9999px;width:1px;height:1px;opacity:0;pointer-events:none;';
+            document.body.appendChild(container);
+        }
+
+        // Load YouTube IFrame API if not loaded
+        if (!window.YT) {
+            const tag = document.createElement('script');
+            tag.src = 'https://www.youtube.com/iframe_api';
+            const firstScriptTag = document.getElementsByTagName('script')[0];
+            firstScriptTag.parentNode?.insertBefore(tag, firstScriptTag);
+        }
+
+        const createPlayer = () => {
+            new window.YT.Player('youtube-player-container', {
+                height: '1',
+                width: '1',
+                videoId: videoId,
+                playerVars: {
+                    autoplay: 1,
+                    controls: 0,
+                    disablekb: 1,
+                    fs: 0,
+                    modestbranding: 1,
+                    rel: 0,
+                },
+                events: {
+                    onReady: onReady,
+                    onStateChange: onStateChange,
+                },
+            });
+        };
+
+        if (window.YT && window.YT.Player) {
+            // Clear previous player
+            container.innerHTML = '';
+            createPlayer();
+        } else {
+            // Wait for API to load
+            window.onYouTubeIframeAPIReady = () => {
+                container!.innerHTML = '';
+                createPlayer();
+            };
+        }
+
+        return () => {
+            // Clean up
+            if (container) {
+                container.innerHTML = '';
+            }
+        };
+    }, [videoId, onReady, onStateChange]);
+
+    return null;
+}
+
+// Extend Window interface for YouTube API
+declare global {
+    interface Window {
+        YT: any;
+        onYouTubeIframeAPIReady: () => void;
+    }
+}
+
