@@ -12,6 +12,9 @@ import {
     saveExhibitionSettings,
 } from '../lib/firebase';
 
+// Global flag to prevent sync loops
+let isReceivingFromFirebase = false;
+
 // Hook to sync gallery store with Firebase for current exhibition
 export function useFirebaseSync() {
     const initialized = useRef(false);
@@ -61,7 +64,11 @@ export function useFirebaseSync() {
             const firebaseData = JSON.stringify(typedArtworks.map(a => ({ ...a })).sort((x, y) => x.id.localeCompare(y.id)));
 
             if (currentData !== firebaseData && typedArtworks.length > 0) {
+                isReceivingFromFirebase = true;
                 useGalleryStore.setState({ artworks: typedArtworks });
+                prevArtworks.current = typedArtworks;
+                // Reset flag after state update is processed
+                setTimeout(() => { isReceivingFromFirebase = false; }, 100);
             }
         });
 
@@ -74,12 +81,14 @@ export function useFirebaseSync() {
                 likes: m.likes || 0,
             }));
 
-            // Include likes in comparison to avoid flickering on like updates
             const currentData = JSON.stringify(store.guestMessages.map(m => ({ id: m.id, nickname: m.nickname, content: m.content, likes: m.likes })).sort((x, y) => x.id.localeCompare(y.id)));
             const firebaseData = JSON.stringify(typedMessages.map(m => ({ id: m.id, nickname: m.nickname, content: m.content, likes: m.likes })).sort((x, y) => x.id.localeCompare(y.id)));
 
             if (currentData !== firebaseData && typedMessages.length > 0) {
+                isReceivingFromFirebase = true;
                 useGalleryStore.setState({ guestMessages: typedMessages });
+                prevMessages.current = typedMessages;
+                setTimeout(() => { isReceivingFromFirebase = false; }, 100);
             }
         });
 
@@ -89,20 +98,34 @@ export function useFirebaseSync() {
                 const store = useGalleryStore.getState();
                 const settings = firebaseSettings as { gallery?: GallerySettings; music?: MusicSettings };
 
-                // Only update if different from current state
+                let updated = false;
+                const newState: Partial<{ gallerySettings: GallerySettings; musicSettings: MusicSettings }> = {};
+
                 if (settings.gallery) {
                     const currentGallery = JSON.stringify(store.gallerySettings);
                     const newGallery = JSON.stringify(settings.gallery);
                     if (currentGallery !== newGallery) {
-                        useGalleryStore.setState({ gallerySettings: settings.gallery });
+                        newState.gallerySettings = settings.gallery;
+                        updated = true;
                     }
                 }
                 if (settings.music) {
                     const currentMusic = JSON.stringify(store.musicSettings);
                     const newMusic = JSON.stringify(settings.music);
                     if (currentMusic !== newMusic) {
-                        useGalleryStore.setState({ musicSettings: settings.music });
+                        newState.musicSettings = settings.music;
+                        updated = true;
                     }
+                }
+
+                if (updated) {
+                    isReceivingFromFirebase = true;
+                    useGalleryStore.setState(newState);
+                    prevSettings.current = {
+                        gallery: settings.gallery || store.gallerySettings,
+                        music: settings.music || store.musicSettings
+                    };
+                    setTimeout(() => { isReceivingFromFirebase = false; }, 100);
                 }
             }
         });
@@ -115,16 +138,13 @@ export function useFirebaseSync() {
         };
     }, [currentExhibitionCode]);
 
-    // Sync local changes to Firebase
+    // Sync local changes to Firebase (only when NOT receiving from Firebase)
     useEffect(() => {
-        if (!currentExhibitionCode) return;
+        if (!currentExhibitionCode || isReceivingFromFirebase) return;
 
         // Skip initial render
         if (prevArtworks.current.length === 0 && artworks.length > 0) {
             prevArtworks.current = artworks;
-            artworks.forEach(artwork => {
-                saveExhibitionArtwork(currentExhibitionCode, { ...artwork }).catch(console.error);
-            });
             return;
         }
 
@@ -146,18 +166,12 @@ export function useFirebaseSync() {
         prevArtworks.current = artworks;
     }, [artworks, currentExhibitionCode]);
 
-    // Sync guest messages
+    // Sync guest messages (only when NOT receiving from Firebase)
     useEffect(() => {
-        if (!currentExhibitionCode) return;
+        if (!currentExhibitionCode || isReceivingFromFirebase) return;
 
         if (prevMessages.current.length === 0 && guestMessages.length > 0) {
             prevMessages.current = guestMessages;
-            guestMessages.forEach(msg => {
-                saveExhibitionGuestMessage(currentExhibitionCode, {
-                    ...msg,
-                    createdAt: msg.createdAt instanceof Date ? msg.createdAt.toISOString() : msg.createdAt
-                }).catch(console.error);
-            });
             return;
         }
 
@@ -182,15 +196,14 @@ export function useFirebaseSync() {
         prevMessages.current = guestMessages;
     }, [guestMessages, currentExhibitionCode]);
 
-    // Sync settings
+    // Sync settings (only when NOT receiving from Firebase)
     useEffect(() => {
-        if (!currentExhibitionCode) return;
+        if (!currentExhibitionCode || isReceivingFromFirebase) return;
 
         const currentSettings = { gallery: gallerySettings, music: musicSettings };
 
         if (!prevSettings.current) {
             prevSettings.current = currentSettings;
-            saveExhibitionSettings(currentExhibitionCode, currentSettings).catch(console.error);
             return;
         }
 
