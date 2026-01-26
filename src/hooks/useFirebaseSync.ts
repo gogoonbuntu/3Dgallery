@@ -74,8 +74,9 @@ export function useFirebaseSync() {
                 likes: m.likes || 0,
             }));
 
-            const currentData = JSON.stringify(store.guestMessages.map(m => ({ id: m.id, nickname: m.nickname, content: m.content })).sort((x, y) => x.id.localeCompare(y.id)));
-            const firebaseData = JSON.stringify(typedMessages.map(m => ({ id: m.id, nickname: m.nickname, content: m.content })).sort((x, y) => x.id.localeCompare(y.id)));
+            // Include likes in comparison to avoid flickering on like updates
+            const currentData = JSON.stringify(store.guestMessages.map(m => ({ id: m.id, nickname: m.nickname, content: m.content, likes: m.likes })).sort((x, y) => x.id.localeCompare(y.id)));
+            const firebaseData = JSON.stringify(typedMessages.map(m => ({ id: m.id, nickname: m.nickname, content: m.content, likes: m.likes })).sort((x, y) => x.id.localeCompare(y.id)));
 
             if (currentData !== firebaseData && typedMessages.length > 0) {
                 useGalleryStore.setState({ guestMessages: typedMessages });
@@ -85,12 +86,23 @@ export function useFirebaseSync() {
         // Subscribe to settings
         const unsubSettings = subscribeToExhibitionSettings(currentExhibitionCode, (firebaseSettings) => {
             if (firebaseSettings) {
+                const store = useGalleryStore.getState();
                 const settings = firebaseSettings as { gallery?: GallerySettings; music?: MusicSettings };
+
+                // Only update if different from current state
                 if (settings.gallery) {
-                    useGalleryStore.setState({ gallerySettings: settings.gallery });
+                    const currentGallery = JSON.stringify(store.gallerySettings);
+                    const newGallery = JSON.stringify(settings.gallery);
+                    if (currentGallery !== newGallery) {
+                        useGalleryStore.setState({ gallerySettings: settings.gallery });
+                    }
                 }
                 if (settings.music) {
-                    useGalleryStore.setState({ musicSettings: settings.music });
+                    const currentMusic = JSON.stringify(store.musicSettings);
+                    const newMusic = JSON.stringify(settings.music);
+                    if (currentMusic !== newMusic) {
+                        useGalleryStore.setState({ musicSettings: settings.music });
+                    }
                 }
             }
         });
