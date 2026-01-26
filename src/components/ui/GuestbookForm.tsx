@@ -74,9 +74,9 @@ export function GuestbookForm() {
         localStorage.setItem(LIKE_COOLDOWN_KEY, JSON.stringify(newCooldowns));
     };
 
-    const isOnCooldown = (id: string) => {
+    const isOnCooldown = (id: string): boolean => {
         const cooldownEnd = likeCooldowns[id];
-        return cooldownEnd && cooldownEnd > Date.now();
+        return Boolean(cooldownEnd && cooldownEnd > Date.now());
     };
 
     // Sort messages: top 4 by likes, rest by date
