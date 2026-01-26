@@ -10,6 +10,7 @@ import { CloseUpView } from './components/ui/CloseUpView';
 import { MusicPlayer } from './components/ui/MusicPlayer';
 import { PlayerCount } from './components/ui/PlayerCount';
 import { QRCodeShare } from './components/ui/QRCodeShare';
+import { BrandWatermark } from './components/ui/BrandWatermark';
 import { AdminAuth } from './components/admin/AdminAuth';
 import { AdminPanel } from './components/admin/AdminPanel';
 import { SuperAdminPanel } from './components/admin/SuperAdminPanel';
@@ -162,6 +163,7 @@ function ExhibitionPage() {
       <MusicPlayer />
       <CloseUpView />
       <QRCodeShare />
+      <BrandWatermark />
 
       {/* Admin UI */}
       <AdminAuth />

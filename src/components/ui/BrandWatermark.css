@@ -1,0 +1,56 @@
+.brand-watermark {
+    position: fixed;
+    bottom: 20px;
+    left: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+    z-index: 50;
+    pointer-events: none;
+    user-select: none;
+    opacity: 0.35;
+    transition: opacity 0.3s ease;
+}
+
+.brand-watermark:hover {
+    opacity: 0.6;
+}
+
+.brand-watermark .brand-ko {
+    font-family: 'Noto Serif KR', serif;
+    font-size: 1.3rem;
+    font-weight: 500;
+    color: #fff;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+    letter-spacing: 4px;
+}
+
+.brand-watermark .brand-en {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 0.75rem;
+    font-weight: 400;
+    color: #fff;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+    letter-spacing: 3px;
+    text-transform: uppercase;
+}
+
+/* Mobile adjustments */
+@media (max-width: 600px) {
+    .brand-watermark {
+        bottom: 80px;
+        left: 15px;
+        opacity: 0.25;
+    }
+
+    .brand-watermark .brand-ko {
+        font-size: 1.1rem;
+        letter-spacing: 3px;
+    }
+
+    .brand-watermark .brand-en {
+        font-size: 0.65rem;
+        letter-spacing: 2px;
+    }
+}
