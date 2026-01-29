@@ -62,6 +62,11 @@ export function AdminPanel() {
         removeAdSlot,
         artworkAnalytics,
         visitorStats,
+        // Undo/Redo
+        undoSettings,
+        redoSettings,
+        canUndo,
+        canRedo,
     } = useGalleryStore();
 
     const [activeTab, setActiveTab] = useState<'settings' | 'artworks' | 'messages' | 'stats' | 'ads'>('settings');
@@ -121,6 +126,26 @@ export function AdminPanel() {
                 <div className="admin-panel-content">
                     {activeTab === 'settings' && (
                         <>
+                            {/* Undo/Redo Buttons */}
+                            <div className="undo-redo-controls">
+                                <button
+                                    className="undo-btn"
+                                    onClick={undoSettings}
+                                    disabled={!canUndo()}
+                                    title="되돌리기"
+                                >
+                                    ↶ 되돌리기
+                                </button>
+                                <button
+                                    className="redo-btn"
+                                    onClick={redoSettings}
+                                    disabled={!canRedo()}
+                                    title="다시하기"
+                                >
+                                    ↷ 다시하기
+                                </button>
+                            </div>
+
                             <section className="setting-section">
                                 <h3>🖼️ 벽지 색상</h3>
                                 <div className="color-options">

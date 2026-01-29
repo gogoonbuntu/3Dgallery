@@ -116,6 +116,10 @@ interface GalleryState {
   gallerySettings: GallerySettings;
   musicSettings: MusicSettings;
 
+  // Settings History (for undo)
+  settingsHistory: Array<{ gallery: GallerySettings; music: MusicSettings }>;
+  settingsHistoryIndex: number;
+
   // Exhibition Actions
   setExhibitionCode: (code: string) => void;
 
@@ -153,6 +157,12 @@ interface GalleryState {
   setTrack: (index: number) => void;
   setPlayerDesign: (design: PlayerDesign) => void;
   setYoutubeUrl: (url: string) => void;
+
+  // Undo/Redo Actions
+  undoSettings: () => void;
+  redoSettings: () => void;
+  canUndo: () => boolean;
+  canRedo: () => boolean;
 }
 
 // Sample artworks
@@ -264,6 +274,10 @@ export const useGalleryStore = create<GalleryState>()(
       gallerySettings: defaultSettings,
       musicSettings: defaultMusicSettings,
 
+      // Settings History (for undo - max 30 entries)
+      settingsHistory: [],
+      settingsHistoryIndex: -1,
+
       // Ads & Analytics initial state
       adSlots: [],
       artworkAnalytics: [],
@@ -320,9 +334,20 @@ export const useGalleryStore = create<GalleryState>()(
       toggleAdminPanel: () => set((state) => ({ isAdminPanelOpen: !state.isAdminPanelOpen })),
 
       updateGallerySettings: (settings) =>
-        set((state) => ({
-          gallerySettings: { ...state.gallerySettings, ...settings },
-        })),
+        set((state) => {
+          // Save current settings to history before updating (max 30 entries)
+          const currentSnapshot = { gallery: state.gallerySettings, music: state.musicSettings };
+          const newHistory = [
+            ...state.settingsHistory.slice(0, state.settingsHistoryIndex + 1),
+            currentSnapshot,
+          ].slice(-30); // Keep only last 30 entries
+
+          return {
+            gallerySettings: { ...state.gallerySettings, ...settings },
+            settingsHistory: newHistory,
+            settingsHistoryIndex: newHistory.length - 1,
+          };
+        }),
 
       addArtwork: (artwork) =>
         set((state) => ({
@@ -441,6 +466,40 @@ export const useGalleryStore = create<GalleryState>()(
         set((state) => ({
           musicSettings: { ...state.musicSettings, youtubeUrl: url },
         })),
+
+      // Undo/Redo Actions
+      undoSettings: () =>
+        set((state) => {
+          if (state.settingsHistoryIndex <= 0) return state;
+          const newIndex = state.settingsHistoryIndex - 1;
+          const prevSettings = state.settingsHistory[newIndex];
+          return {
+            settingsHistoryIndex: newIndex,
+            gallerySettings: prevSettings.gallery,
+            musicSettings: prevSettings.music,
+          };
+        }),
+
+      redoSettings: () =>
+        set((state) => {
+          if (state.settingsHistoryIndex >= state.settingsHistory.length - 1) return state;
+          const newIndex = state.settingsHistoryIndex + 1;
+          const nextSettings = state.settingsHistory[newIndex];
+          return {
+            settingsHistoryIndex: newIndex,
+            gallerySettings: nextSettings.gallery,
+            musicSettings: nextSettings.music,
+          };
+        }),
+
+      canUndo: (): boolean => {
+        return useGalleryStore.getState().settingsHistoryIndex > 0;
+      },
+
+      canRedo: (): boolean => {
+        const s = useGalleryStore.getState();
+        return s.settingsHistoryIndex < s.settingsHistory.length - 1;
+      },
     }),
     {
       name: 'gallery-storage',

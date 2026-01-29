@@ -1,5 +1,5 @@
 import { useRef, useState, useMemo, memo, useCallback } from 'react';
-import { useLoader } from '@react-three/fiber';
+import { useLoader, useFrame } from '@react-three/fiber';
 import type { ThreeEvent } from '@react-three/fiber';
 import * as THREE from 'three';
 import { useGalleryStore } from '../store/galleryStore';
@@ -23,10 +23,14 @@ const FRAME_COLORS: Record<string, string> = {
     none: 'transparent',
 };
 
+// Check if URL is a GIF
+const isGifUrl = (url: string) => url.toLowerCase().endsWith('.gif');
+
 // 개별 Artwork 컴포넌트 - memo로 불필요한 리렌더링 방지
 const ArtworkItem = memo(function ArtworkItem({ artwork }: ArtworkProps) {
     const meshRef = useRef<THREE.Mesh>(null);
     const [hovered, setHovered] = useState(false);
+    const isGif = isGifUrl(artwork.imageUrl);
 
     // 선택적 구독: 필요한 상태만 구독하여 리렌더링 최소화
     const selectArtwork = useGalleryStore((state) => state.selectArtwork);
@@ -43,6 +47,13 @@ const ArtworkItem = memo(function ArtworkItem({ artwork }: ArtworkProps) {
 
     // Load texture
     const texture = useLoader(THREE.TextureLoader, artwork.imageUrl);
+
+    // For GIFs: continuously update texture to animate
+    useFrame(() => {
+        if (isGif && texture) {
+            texture.needsUpdate = true;
+        }
+    });
 
     // Calculate image size using useMemo for stable rendering
     const imageSize = useMemo(() => {
