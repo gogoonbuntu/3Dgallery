@@ -1,7 +1,4 @@
 .brand-watermark {
-    position: fixed;
-    bottom: 20px;
-    left: 20px;
     display: flex;
     flex-direction: column;
     align-items: flex-start;
@@ -39,8 +36,6 @@
 /* Mobile adjustments */
 @media (max-width: 600px) {
     .brand-watermark {
-        bottom: 80px;
-        left: 15px;
         opacity: 0.25;
     }
 

@@ -43,3 +43,47 @@
     transform: rotate(360deg);
   }
 }
+
+/* Brand + Admin container: admin buttons appear on hover */
+.brand-admin-container {
+  position: fixed;
+  bottom: 20px;
+  left: 20px;
+  z-index: 50;
+}
+
+/* Reset BrandWatermark position when inside container */
+.brand-admin-container .brand-watermark {
+  position: static;
+  pointer-events: auto;
+  cursor: default;
+}
+
+/* Admin controls inside container - hidden by default */
+.brand-admin-container .admin-login-trigger,
+.brand-admin-container .admin-controls {
+  position: absolute;
+  left: 0;
+  bottom: 100%;
+  margin-bottom: 10px;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(5px);
+  transition: opacity 0.25s ease, transform 0.25s ease;
+}
+
+/* Show admin controls on container hover */
+.brand-admin-container:hover .admin-login-trigger,
+.brand-admin-container:hover .admin-controls {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0);
+}
+
+/* Mobile adjustments */
+@media (max-width: 600px) {
+  .brand-admin-container {
+    bottom: 80px;
+    left: 15px;
+  }
+}

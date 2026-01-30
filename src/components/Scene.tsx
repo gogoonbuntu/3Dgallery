@@ -46,6 +46,7 @@ function LoadingBox() {
 
 export function Scene() {
     const sceneInitTime = useRef(Date.now());
+    const isCloseUpMode = useGalleryStore((state) => state.isCloseUpMode);
 
     useEffect(() => {
         debugLog('MOUNT', 'Scene component mounted', { elapsed: 0 });
@@ -89,9 +90,12 @@ export function Scene() {
             <SceneLogger name="MusicPlayer3D" initTime={sceneInitTime.current}>
                 <MusicPlayer3D />
             </SceneLogger>
-            <SceneLogger name="OtherPlayers" initTime={sceneInitTime.current}>
-                <OtherPlayers />
-            </SceneLogger>
+            {/* Hide other players when viewing artwork up close */}
+            {!isCloseUpMode && (
+                <SceneLogger name="OtherPlayers" initTime={sceneInitTime.current}>
+                    <OtherPlayers />
+                </SceneLogger>
+            )}
         </>
     );
 }

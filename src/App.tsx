@@ -252,10 +252,14 @@ function ExhibitionPage() {
       <MusicPlayer />
       <CloseUpView />
       <QRCodeShare />
-      <BrandWatermark />
 
-      {/* Admin UI */}
-      <AdminAuth />
+      {/* Brand logo with admin controls (show admin on hover) */}
+      <div className="brand-admin-container">
+        <BrandWatermark />
+        <AdminAuth />
+      </div>
+
+      {/* Admin Panel */}
       {isAdmin && <AdminPanel />}
     </div>
   );
