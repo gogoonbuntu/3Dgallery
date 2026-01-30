@@ -50,6 +50,10 @@
   bottom: 20px;
   left: 20px;
   z-index: 50;
+  display: flex;
+  flex-direction: row;
+  align-items: flex-end;
+  gap: 12px;
 }
 
 /* Reset BrandWatermark position when inside container */
@@ -62,13 +66,9 @@
 /* Admin controls inside container - hidden by default */
 .brand-admin-container .admin-login-trigger,
 .brand-admin-container .admin-controls {
-  position: absolute;
-  left: 0;
-  bottom: 100%;
-  margin-bottom: 10px;
   opacity: 0;
   pointer-events: none;
-  transform: translateY(5px);
+  transform: translateX(-10px);
   transition: opacity 0.25s ease, transform 0.25s ease;
 }
 
@@ -77,7 +77,7 @@
 .brand-admin-container:hover .admin-controls {
   opacity: 1;
   pointer-events: auto;
-  transform: translateY(0);
+  transform: translateX(0);
 }
 
 /* Mobile adjustments */
