@@ -44,6 +44,12 @@ function ErrorScreen({ onRetry, autoRetrying }: { onRetry: () => void; autoRetry
   );
 }
 
+// Debug helper with timestamp
+const debugLog = (phase: string, message: string, data?: unknown) => {
+  const timestamp = new Date().toISOString().split('T')[1].slice(0, -1);
+  console.log(`[${timestamp}] [${phase}] ${message}`, data ?? '');
+};
+
 // Exhibition page component
 function ExhibitionPage() {
   const { code } = useParams<{ code: string }>();
@@ -52,29 +58,88 @@ function ExhibitionPage() {
   const [canvasKey, setCanvasKey] = useState(0);
   const [isReady, setIsReady] = useState(false);
   const [autoRetrying, setAutoRetrying] = useState(false);
+  const [initPhase, setInitPhase] = useState('starting');
   const retryCount = useRef(0);
   const maxAutoRetries = 2;
+  const initStartTime = useRef(Date.now());
 
-  // Set exhibition code from URL
+  // Log component mount and phase changes
+  useEffect(() => {
+    debugLog('MOUNT', 'ExhibitionPage component mounted', { code, initPhase, elapsed: 0 });
+    return () => debugLog('UNMOUNT', 'ExhibitionPage component unmounting');
+  }, []);
+
+  // Log phase changes
+  useEffect(() => {
+    debugLog('PHASE', `Current init phase: ${initPhase}`, { elapsed: Date.now() - initStartTime.current });
+  }, [initPhase]);
+
+  // Phase 1: Set exhibition code from URL
   useEffect(() => {
     if (code) {
+      const elapsed = Date.now() - initStartTime.current;
+      debugLog('PHASE-1', `Setting exhibition code: ${code}`, { elapsed });
+      setInitPhase('exhibition-code');
       setExhibitionCode(code);
+      debugLog('PHASE-1', 'Exhibition code set complete', { elapsed: Date.now() - initStartTime.current });
     }
   }, [code, setExhibitionCode]);
 
-  // Initialize Firebase sync
-  useFirebaseSync();
-
-  // Initialize multiplayer connection
-  useMultiplayerSync();
-
-  // Delay Canvas initialization to let the page settle
+  // Phase 2: Initialize Firebase sync (with delay)
+  const [firebaseReady, setFirebaseReady] = useState(false);
   useEffect(() => {
+    if (!code) return;
+    const elapsed = Date.now() - initStartTime.current;
+    debugLog('PHASE-2', 'Waiting before Firebase sync init...', { elapsed });
+    setInitPhase('firebase-wait');
+
     const timer = setTimeout(() => {
-      setIsReady(true);
-    }, 100);
+      debugLog('PHASE-2', 'Starting Firebase sync', { elapsed: Date.now() - initStartTime.current });
+      setFirebaseReady(true);
+      setInitPhase('firebase-init');
+    }, 200); // 200ms delay before Firebase
+
     return () => clearTimeout(timer);
-  }, []);
+  }, [code]);
+
+  // Only run Firebase sync after firebaseReady is true
+  useFirebaseSync(firebaseReady);
+
+  // Phase 3: Initialize multiplayer connection (with delay)
+  const [multiplayerReady, setMultiplayerReady] = useState(false);
+  useEffect(() => {
+    if (!firebaseReady) return;
+    const elapsed = Date.now() - initStartTime.current;
+    debugLog('PHASE-3', 'Waiting before Multiplayer sync init...', { elapsed });
+    setInitPhase('multiplayer-wait');
+
+    const timer = setTimeout(() => {
+      debugLog('PHASE-3', 'Starting Multiplayer sync', { elapsed: Date.now() - initStartTime.current });
+      setMultiplayerReady(true);
+      setInitPhase('multiplayer-init');
+    }, 400); // 400ms delay before Multiplayer (Firebase에서 데이터 로드할 시간 확보)
+
+    return () => clearTimeout(timer);
+  }, [firebaseReady]);
+
+  // Only run Multiplayer sync after multiplayerReady is true
+  useMultiplayerSync(multiplayerReady);
+
+  // Phase 4: Delay Canvas initialization to let everything settle
+  useEffect(() => {
+    if (!multiplayerReady) return;
+    const elapsed = Date.now() - initStartTime.current;
+    debugLog('PHASE-4', 'Waiting before Canvas init...', { elapsed });
+    setInitPhase('canvas-wait');
+
+    const timer = setTimeout(() => {
+      debugLog('PHASE-4', 'Canvas/WebGL ready', { elapsed: Date.now() - initStartTime.current });
+      setIsReady(true);
+      setInitPhase('canvas-ready');
+    }, 800); // 800ms delay to let StrictMode double-mount complete
+
+    return () => clearTimeout(timer);
+  }, [multiplayerReady]);
 
   // Handle ESC key to exit close-up mode or close admin panel
   useEffect(() => {
@@ -91,29 +156,43 @@ function ExhibitionPage() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isCloseUpMode, exitCloseUpMode, isAdminPanelOpen]);
 
-  // Auto-retry logic when context is lost
+  // Auto-retry logic when context is lost - wait longer to let GPU recover
   useEffect(() => {
     if (contextLost && retryCount.current < maxAutoRetries) {
+      debugLog('RECOVERY', `Auto-retry ${retryCount.current + 1}/${maxAutoRetries} in 1.5s...`);
       setAutoRetrying(true);
       const timer = setTimeout(() => {
         retryCount.current += 1;
         setContextLost(false);
-        setCanvasKey(prev => prev + 1);
+        // Only recreate Canvas on last retry attempt
+        if (retryCount.current >= maxAutoRetries) {
+          debugLog('RECOVERY', 'All retries exhausted, recreating Canvas');
+          setCanvasKey(prev => prev + 1);
+        }
         setAutoRetrying(false);
-      }, 500);
+      }, 1500); // Increased from 500ms to give GPU more time
       return () => clearTimeout(timer);
     }
   }, [contextLost]);
 
   const handleRetry = useCallback(() => {
+    debugLog('RECOVERY', 'Manual retry requested, recreating Canvas');
     retryCount.current = 0;
     setContextLost(false);
     setCanvasKey(prev => prev + 1);
   }, []);
 
+  // Debounced context lost handler
+  const contextLostTimeoutRef = useRef<number | null>(null);
   const handleContextLost = useCallback((e: Event) => {
     e.preventDefault();
+    // Debounce rapid context lost events
+    if (contextLostTimeoutRef.current) return;
+    debugLog('WEBGL', 'WebGL context LOST!', { elapsed: Date.now() - initStartTime.current });
     console.warn('WebGL context lost, attempting recovery...');
+    contextLostTimeoutRef.current = window.setTimeout(() => {
+      contextLostTimeoutRef.current = null;
+    }, 2000);
     setContextLost(true);
   }, []);
 
@@ -133,19 +212,29 @@ function ExhibitionPage() {
               gl={{
                 antialias: window.devicePixelRatio < 2,
                 alpha: false,
-                powerPreference: 'default',
+                stencil: false, // Reduce GPU memory usage
+                depth: true,
+                powerPreference: 'low-power', // Reduce GPU pressure to prevent context loss
                 failIfMajorPerformanceCaveat: false,
-                preserveDrawingBuffer: false,
+                preserveDrawingBuffer: true, // Help with context recovery
               }}
               dpr={Math.min(window.devicePixelRatio, 1.5)}
+              // Use 'always' for continuous rendering (needed for animations)
+              frameloop="always"
               onCreated={({ gl }) => {
+                const elapsed = Date.now() - initStartTime.current;
+                debugLog('WEBGL', 'Canvas created, WebGL context obtained', { elapsed });
                 gl.setClearColor('#1a1a1a');
                 const canvas = gl.domElement;
-                canvas.addEventListener('webglcontextlost', handleContextLost);
+                canvas.addEventListener('webglcontextlost', (e) => {
+                  debugLog('WEBGL', 'WebGL context LOST!', { elapsed: Date.now() - initStartTime.current });
+                  handleContextLost(e);
+                });
                 canvas.addEventListener('webglcontextrestored', () => {
-                  console.log('WebGL context restored');
+                  debugLog('WEBGL', 'WebGL context RESTORED', { elapsed: Date.now() - initStartTime.current });
                   setContextLost(false);
                 });
+                debugLog('WEBGL', 'Event listeners attached', { elapsed: Date.now() - initStartTime.current });
               }}
             >
               <Scene />

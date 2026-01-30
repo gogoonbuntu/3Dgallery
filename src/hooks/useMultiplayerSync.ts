@@ -6,6 +6,12 @@ import {
     subscribeToPlayers,
 } from '../lib/firebase';
 
+// Debug helper
+const debugLog = (phase: string, message: string, data?: unknown) => {
+    const timestamp = new Date().toISOString().split('T')[1].slice(0, -1);
+    console.log(`[${timestamp}] [Multiplayer-${phase}] ${message}`, data ?? '');
+};
+
 // 플레이어 ID 생성
 function generatePlayerId(): string {
     return `player_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
@@ -18,7 +24,8 @@ const INACTIVE_TIMEOUT = 120000;
 const HEARTBEAT_INTERVAL = 30000;
 
 // 멀티플레이어 연결 관리 훅 - App 레벨에서 한 번만 호출
-export function useMultiplayerSync() {
+// enabled: When false, the hook will not initialize multiplayer connection
+export function useMultiplayerSync(enabled: boolean = true) {
     const {
         myNickname,
         myColor,
@@ -31,21 +38,40 @@ export function useMultiplayerSync() {
     const playerIdRef = useRef<string | null>(null);
     const lastPositionRef = useRef({ x: 0, y: 1.6, z: 5 });
     const lastRotationRef = useRef(0);
+    const initStartTime = useRef(Date.now());
 
     useEffect(() => {
+        // Skip if not enabled yet
+        if (!enabled) {
+            debugLog('SKIP', 'Multiplayer sync not enabled yet, waiting...');
+            return;
+        }
+
         // 이미 초기화됐으면 스킵
-        if (initialized.current) return;
+        if (initialized.current) {
+            debugLog('SKIP', 'Already initialized, skipping');
+            return;
+        }
         initialized.current = true;
+        initStartTime.current = Date.now();
+
+        debugLog('INIT', 'Starting multiplayer initialization', { elapsed: 0 });
 
         const playerId = generatePlayerId();
         playerIdRef.current = playerId;
         setMyPlayerId(playerId);
         setConnected(true);
 
-        console.log('Multiplayer connected:', playerId);
+        debugLog('CONNECT', `Player ID generated: ${playerId}`, {
+            elapsed: Date.now() - initStartTime.current
+        });
 
         // 초기 위치를 즉시 Firestore에 등록 (기본 카메라 위치)
         const initialPosition = { x: 0, y: 1.6, z: 5 };
+        debugLog('POSITION', 'Registering initial position to Firestore', {
+            position: initialPosition,
+            elapsed: Date.now() - initStartTime.current
+        });
         updatePlayerPosition({
             id: playerId,
             nickname: myNickname,
@@ -53,16 +79,34 @@ export function useMultiplayerSync() {
             rotation: 0,
             color: myColor,
             lastUpdate: Date.now(),
-        }).catch(console.error);
+        }).then(() => {
+            debugLog('POSITION', 'Initial position registered successfully', {
+                elapsed: Date.now() - initStartTime.current
+            });
+        }).catch((err) => {
+            debugLog('ERROR', 'Failed to register initial position', err);
+        });
 
         // Firestore에 다른 플레이어들 구독
+        debugLog('SUB', 'Subscribing to other players', {
+            elapsed: Date.now() - initStartTime.current
+        });
         const unsubscribe = subscribeToPlayers((players) => {
             const now = Date.now();
+            debugLog('DATA', `Players data received`, {
+                totalPlayers: players.length,
+                elapsed: Date.now() - initStartTime.current
+            });
 
             // 비활성 플레이어 필터링 & 타입 변환
             const activePlayers = (players as Player[]).filter(
                 (p) => now - p.lastUpdate < INACTIVE_TIMEOUT
             );
+
+            debugLog('DATA', `Active players filtered`, {
+                activeCount: activePlayers.length,
+                elapsed: Date.now() - initStartTime.current
+            });
 
             setPlayers(activePlayers);
         });
@@ -95,7 +139,7 @@ export function useMultiplayerSync() {
             removePlayer(playerId).catch(console.error);
             setConnected(false);
         };
-    }, [myNickname, myColor, setMyPlayerId, setPlayers, setConnected]);
+    }, [enabled, myNickname, myColor, setMyPlayerId, setPlayers, setConnected]);
 
     // 위치 업데이트 시 ref도 갱신하도록 함수 반환
     const updatePositionRef = (position: { x: number; y: number; z: number }, rotation: number) => {

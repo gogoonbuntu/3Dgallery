@@ -15,10 +15,18 @@ import {
 // Global flag to prevent sync loops
 let isReceivingFromFirebase = false;
 
+// Debug helper
+const debugLog = (phase: string, message: string, data?: unknown) => {
+    const timestamp = new Date().toISOString().split('T')[1].slice(0, -1);
+    console.log(`[${timestamp}] [Firebase-${phase}] ${message}`, data ?? '');
+};
+
 // Hook to sync gallery store with Firebase for current exhibition
-export function useFirebaseSync() {
+// enabled: When false, the hook will not initialize Firebase subscriptions
+export function useFirebaseSync(enabled: boolean = true) {
     const initialized = useRef(false);
     const currentCodeRef = useRef<string>('');
+    const syncStartTime = useRef(Date.now());
     const unsubscribersRef = useRef<(() => void)[]>([]);
 
     const {
@@ -36,6 +44,12 @@ export function useFirebaseSync() {
 
     // Subscribe to Firebase updates when exhibition code changes
     useEffect(() => {
+        // Skip if not enabled yet
+        if (!enabled) {
+            debugLog('SKIP', 'Firebase sync not enabled yet, waiting...');
+            return;
+        }
+
         if (!currentExhibitionCode) return;
 
         // If code changed, unsubscribe from previous
@@ -53,10 +67,18 @@ export function useFirebaseSync() {
         if (initialized.current) return;
         initialized.current = true;
 
-        console.log(`Initializing Firebase sync for exhibition: ${currentExhibitionCode}`);
+        syncStartTime.current = Date.now();
+        debugLog('INIT', `Starting Firebase sync for exhibition: ${currentExhibitionCode}`, {
+            elapsed: Date.now() - syncStartTime.current
+        });
 
         // Subscribe to artworks
+        debugLog('SUB', 'Subscribing to artworks...', { elapsed: Date.now() - syncStartTime.current });
         const unsubArtworks = subscribeToExhibitionArtworks(currentExhibitionCode, (firebaseArtworks) => {
+            debugLog('DATA', `Artworks received from Firebase`, {
+                count: firebaseArtworks.length,
+                elapsed: Date.now() - syncStartTime.current
+            });
             const store = useGalleryStore.getState();
             const typedArtworks = firebaseArtworks as Artwork[];
 
@@ -64,6 +86,10 @@ export function useFirebaseSync() {
             const firebaseData = JSON.stringify(typedArtworks.map(a => ({ ...a })).sort((x, y) => x.id.localeCompare(y.id)));
 
             if (currentData !== firebaseData && typedArtworks.length > 0) {
+                debugLog('UPDATE', 'Updating store with artworks from Firebase', {
+                    count: typedArtworks.length,
+                    elapsed: Date.now() - syncStartTime.current
+                });
                 isReceivingFromFirebase = true;
                 useGalleryStore.setState({ artworks: typedArtworks });
                 prevArtworks.current = typedArtworks;
@@ -73,7 +99,12 @@ export function useFirebaseSync() {
         });
 
         // Subscribe to messages
+        debugLog('SUB', 'Subscribing to guestbook messages...', { elapsed: Date.now() - syncStartTime.current });
         const unsubMessages = subscribeToExhibitionGuestbook(currentExhibitionCode, (firebaseMessages) => {
+            debugLog('DATA', `Guestbook messages received from Firebase`, {
+                count: firebaseMessages.length,
+                elapsed: Date.now() - syncStartTime.current
+            });
             const store = useGalleryStore.getState();
             const typedMessages = (firebaseMessages as GuestMessage[]).map(m => ({
                 ...m,
@@ -85,6 +116,10 @@ export function useFirebaseSync() {
             const firebaseData = JSON.stringify(typedMessages.map(m => ({ id: m.id, nickname: m.nickname, content: m.content, likes: m.likes })).sort((x, y) => x.id.localeCompare(y.id)));
 
             if (currentData !== firebaseData && typedMessages.length > 0) {
+                debugLog('UPDATE', 'Updating store with messages from Firebase', {
+                    count: typedMessages.length,
+                    elapsed: Date.now() - syncStartTime.current
+                });
                 isReceivingFromFirebase = true;
                 useGalleryStore.setState({ guestMessages: typedMessages });
                 prevMessages.current = typedMessages;
@@ -93,7 +128,13 @@ export function useFirebaseSync() {
         });
 
         // Subscribe to settings
+        debugLog('SUB', 'Subscribing to settings...', { elapsed: Date.now() - syncStartTime.current });
         const unsubSettings = subscribeToExhibitionSettings(currentExhibitionCode, (firebaseSettings) => {
+            debugLog('DATA', 'Settings received from Firebase', {
+                hasGallery: !!(firebaseSettings as { gallery?: unknown })?.gallery,
+                hasMusic: !!(firebaseSettings as { music?: unknown })?.music,
+                elapsed: Date.now() - syncStartTime.current
+            });
             if (firebaseSettings) {
                 const store = useGalleryStore.getState();
                 const settings = firebaseSettings as { gallery?: GallerySettings; music?: MusicSettings };
@@ -119,6 +160,9 @@ export function useFirebaseSync() {
                 }
 
                 if (updated) {
+                    debugLog('UPDATE', 'Updating store with settings from Firebase', {
+                        elapsed: Date.now() - syncStartTime.current
+                    });
                     isReceivingFromFirebase = true;
                     useGalleryStore.setState(newState);
                     prevSettings.current = {
@@ -130,13 +174,14 @@ export function useFirebaseSync() {
             }
         });
 
+        debugLog('INIT', 'All Firebase subscriptions created', { elapsed: Date.now() - syncStartTime.current });
         unsubscribersRef.current = [unsubArtworks, unsubMessages, unsubSettings];
 
         return () => {
             unsubscribersRef.current.forEach(unsub => unsub());
             unsubscribersRef.current = [];
         };
-    }, [currentExhibitionCode]);
+    }, [currentExhibitionCode, enabled]);
 
     // Sync local changes to Firebase (only when NOT receiving from Firebase)
     useEffect(() => {
