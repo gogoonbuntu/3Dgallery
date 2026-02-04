@@ -4,7 +4,8 @@ import {
     updatePlayerPosition,
     removePlayer,
     subscribeToPlayers,
-} from '../lib/firebase';
+    setupPlayerOnDisconnect,
+} from '../lib/realtimeDb';
 
 // Debug helper
 const debugLog = (phase: string, message: string, data?: unknown) => {
@@ -17,11 +18,11 @@ function generatePlayerId(): string {
     return `player_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
 }
 
-// 비활성 플레이어 제거 시간 (ms) - 2분으로 연장
-const INACTIVE_TIMEOUT = 120000;
+// 비활성 플레이어 제거 시간 (ms) - 3분
+const INACTIVE_TIMEOUT = 180000;
 
-// Heartbeat 간격 (ms) - 30초마다 위치 갱신
-const HEARTBEAT_INTERVAL = 30000;
+// Heartbeat 간격 (ms) - 60초마다 위치 갱신 (Firestore 비용 최적화)
+const HEARTBEAT_INTERVAL = 60000;
 
 // 멀티플레이어 연결 관리 훅 - App 레벨에서 한 번만 호출
 // enabled: When false, the hook will not initialize multiplayer connection
@@ -66,9 +67,9 @@ export function useMultiplayerSync(enabled: boolean = true) {
             elapsed: Date.now() - initStartTime.current
         });
 
-        // 초기 위치를 즉시 Firestore에 등록 (기본 카메라 위치)
+        // 초기 위치를 RTDB에 등록 (기본 카메라 위치)
         const initialPosition = { x: 0, y: 1.6, z: 5 };
-        debugLog('POSITION', 'Registering initial position to Firestore', {
+        debugLog('POSITION', 'Registering initial position to RTDB', {
             position: initialPosition,
             elapsed: Date.now() - initStartTime.current
         });
@@ -83,6 +84,9 @@ export function useMultiplayerSync(enabled: boolean = true) {
             debugLog('POSITION', 'Initial position registered successfully', {
                 elapsed: Date.now() - initStartTime.current
             });
+            // Setup onDisconnect - automatically removes player when browser closes
+            setupPlayerOnDisconnect(playerId);
+            debugLog('DISCONNECT', 'onDisconnect handler set up');
         }).catch((err) => {
             debugLog('ERROR', 'Failed to register initial position', err);
         });

@@ -1,26 +1,36 @@
 import { useState } from 'react';
 import { useGalleryStore } from '../../store/galleryStore';
+import { verifyExhibitionPassword } from '../../lib/firebase';
 import './AdminAuth.css';
 
-// Simple password - in production, use environment variable or proper auth
-const ADMIN_PASSWORD = 'gallery2024';
-
 export function AdminAuth() {
-    const { isAdmin, setAdminMode, toggleAdminPanel } = useGalleryStore();
+    const { isAdmin, setAdminMode, toggleAdminPanel, currentExhibitionCode } = useGalleryStore();
     const [showLogin, setShowLogin] = useState(false);
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
+    const [isLoading, setIsLoading] = useState(false);
 
-    const handleLogin = (e: React.FormEvent) => {
+    const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (password === ADMIN_PASSWORD) {
-            setAdminMode(true);
-            setShowLogin(false);
-            setPassword('');
-            setError('');
-            toggleAdminPanel();
-        } else {
-            setError('비밀번호가 올바르지 않습니다');
+        setIsLoading(true);
+        setError('');
+
+        try {
+            const isValid = await verifyExhibitionPassword(currentExhibitionCode, password);
+            if (isValid) {
+                setAdminMode(true);
+                setShowLogin(false);
+                setPassword('');
+                setError('');
+                toggleAdminPanel();
+            } else {
+                setError('비밀번호가 올바르지 않습니다');
+            }
+        } catch (err) {
+            console.error('Password verification error:', err);
+            setError('인증 중 오류가 발생했습니다');
+        } finally {
+            setIsLoading(false);
         }
     };
 
@@ -59,13 +69,16 @@ export function AdminAuth() {
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
                                 autoFocus
+                                disabled={isLoading}
                             />
                             {error && <p className="error">{error}</p>}
                             <div className="login-actions">
-                                <button type="button" onClick={() => setShowLogin(false)}>
+                                <button type="button" onClick={() => setShowLogin(false)} disabled={isLoading}>
                                     취소
                                 </button>
-                                <button type="submit">로그인</button>
+                                <button type="submit" disabled={isLoading}>
+                                    {isLoading ? '확인 중...' : '로그인'}
+                                </button>
                             </div>
                         </form>
                     </div>
@@ -74,3 +87,4 @@ export function AdminAuth() {
         </>
     );
 }
+

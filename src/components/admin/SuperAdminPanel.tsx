@@ -31,8 +31,10 @@ export function SuperAdminPanel() {
     // Create exhibition form
     const [newTitle, setNewTitle] = useState('');
     const [newHostEmail, setNewHostEmail] = useState('');
+    const [newAdminPassword, setNewAdminPassword] = useState('');
     const [creating, setCreating] = useState(false);
     const [createdCode, setCreatedCode] = useState<string | null>(null);
+    const [createdPassword, setCreatedPassword] = useState<string | null>(null);
 
     // Auth state listener
     useEffect(() => {
@@ -80,17 +82,24 @@ export function SuperAdminPanel() {
 
     const handleCreateExhibition = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!newTitle.trim() || !newHostEmail.trim()) {
-            alert('전시회 제목과 호스트 이메일을 입력해주세요.');
+        if (!newTitle.trim() || !newHostEmail.trim() || !newAdminPassword.trim()) {
+            alert('전시회 제목, 호스트 이메일, 관리자 비밀번호를 모두 입력해주세요.');
+            return;
+        }
+
+        if (newAdminPassword.length < 4) {
+            alert('관리자 비밀번호는 최소 4자 이상이어야 합니다.');
             return;
         }
 
         setCreating(true);
         try {
-            const code = await createExhibition(newTitle.trim(), newHostEmail.trim());
+            const code = await createExhibition(newTitle.trim(), newHostEmail.trim(), newAdminPassword);
             setCreatedCode(code);
+            setCreatedPassword(newAdminPassword);
             setNewTitle('');
             setNewHostEmail('');
+            setNewAdminPassword('');
             loadExhibitions();
         } catch (error) {
             console.error('Failed to create exhibition:', error);
@@ -204,6 +213,14 @@ export function SuperAdminPanel() {
                             onChange={(e) => setNewHostEmail(e.target.value)}
                             required
                         />
+                        <input
+                            type="password"
+                            placeholder="관리자 비밀번호 (4자 이상)"
+                            value={newAdminPassword}
+                            onChange={(e) => setNewAdminPassword(e.target.value)}
+                            required
+                            minLength={4}
+                        />
                         <button type="submit" disabled={creating}>
                             {creating ? '생성 중...' : '전시회 생성'}
                         </button>
@@ -219,12 +236,25 @@ export function SuperAdminPanel() {
                             <p className="url-hint">
                                 접속 URL: <code>{window.location.origin}/{createdCode}</code>
                             </p>
-                            <button
-                                className="visit-btn"
-                                onClick={() => navigate(`/${createdCode}`)}
-                            >
-                                전시회 방문 →
-                            </button>
+                            {createdPassword && (
+                                <p className="password-hint">
+                                    🔐 관리자 비밀번호: <code>{createdPassword}</code>
+                                </p>
+                            )}
+                            <div className="created-actions">
+                                <button
+                                    className="visit-btn"
+                                    onClick={() => navigate(`/${createdCode}`)}
+                                >
+                                    전시회 방문 →
+                                </button>
+                                <button
+                                    className="setup-btn"
+                                    onClick={() => navigate(`/${createdCode}?admin=1`)}
+                                >
+                                    ⚙️ 전시회 설정하러 가기
+                                </button>
+                            </div>
                         </div>
                     )}
                 </section>

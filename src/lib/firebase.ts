@@ -10,7 +10,8 @@ const firebaseConfig = {
     storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
     messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
     appId: import.meta.env.VITE_FIREBASE_APP_ID,
-    measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID
+    measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID,
+    databaseURL: import.meta.env.VITE_FIREBASE_DATABASE_URL,
 };
 
 // Initialize Firebase
@@ -21,6 +22,64 @@ export const db = getFirestore(app);
 
 // Initialize Auth
 export const auth = getAuth(app);
+
+// ============================================
+// Memory Cache System - Reduces Firestore reads
+// ============================================
+
+interface CacheEntry<T> {
+    data: T;
+    timestamp: number;
+    ttl: number;
+}
+
+class MemoryCache {
+    private cache = new Map<string, CacheEntry<unknown>>();
+
+    set<T>(key: string, data: T, ttlMs: number): void {
+        this.cache.set(key, {
+            data,
+            timestamp: Date.now(),
+            ttl: ttlMs
+        });
+    }
+
+    get<T>(key: string): T | null {
+        const entry = this.cache.get(key);
+        if (!entry) return null;
+
+        // Check if expired
+        if (Date.now() - entry.timestamp > entry.ttl) {
+            this.cache.delete(key);
+            return null;
+        }
+
+        return entry.data as T;
+    }
+
+    invalidate(key: string): void {
+        this.cache.delete(key);
+    }
+
+    invalidatePrefix(prefix: string): void {
+        for (const key of this.cache.keys()) {
+            if (key.startsWith(prefix)) {
+                this.cache.delete(key);
+            }
+        }
+    }
+}
+
+// Global cache instance
+const cache = new MemoryCache();
+
+// Cache TTL constants
+const CACHE_TTL = {
+    EXHIBITION_META: 5 * 60 * 1000,    // 5 minutes
+    EXHIBITION_EXISTS: 10 * 60 * 1000, // 10 minutes  
+    SETTINGS: 60 * 1000,               // 1 minute
+    PASSWORD_VERIFIED: 30 * 60 * 1000, // 30 minutes (once verified, cache it)
+};
 
 // ============================================
 // Exhibition-specific collections
@@ -64,6 +123,7 @@ export interface ExhibitionMeta {
     code: string;
     title: string;
     hostEmail: string;
+    adminPassword: string;  // Exhibition-specific admin password
     createdAt: string;
     isActive: boolean;
 }
@@ -79,7 +139,7 @@ export function generateExhibitionCode(): string {
 }
 
 // Create new exhibition
-export async function createExhibition(title: string, hostEmail: string): Promise<string> {
+export async function createExhibition(title: string, hostEmail: string, adminPassword: string): Promise<string> {
     let code = generateExhibitionCode();
 
     // Ensure unique code
@@ -98,6 +158,7 @@ export async function createExhibition(title: string, hostEmail: string): Promis
         code,
         title,
         hostEmail,
+        adminPassword,  // Store the admin password
         createdAt: new Date().toISOString(),
         isActive: true,
     };
@@ -132,19 +193,68 @@ export async function createExhibition(title: string, hostEmail: string): Promis
     return code;
 }
 
-// Get exhibition meta
+// Verify exhibition admin password (with caching)
+export async function verifyExhibitionPassword(exhibitionCode: string, password: string): Promise<boolean> {
+    // Check if this password was already verified and cached
+    const cacheKey = `password_verified:${exhibitionCode}:${password}`;
+    const cachedResult = cache.get<boolean>(cacheKey);
+    if (cachedResult !== null) {
+        return cachedResult;
+    }
+
+    const meta = await getExhibitionMeta(exhibitionCode);
+    if (!meta) {
+        // Fallback for legacy exhibitions without password
+        const result = password === 'gallery2024';
+        if (result) cache.set(cacheKey, result, CACHE_TTL.PASSWORD_VERIFIED);
+        return result;
+    }
+    if (!meta.adminPassword) {
+        // Fallback for legacy exhibitions without password
+        const result = password === 'gallery2024';
+        if (result) cache.set(cacheKey, result, CACHE_TTL.PASSWORD_VERIFIED);
+        return result;
+    }
+    const result = meta.adminPassword === password;
+    if (result) cache.set(cacheKey, result, CACHE_TTL.PASSWORD_VERIFIED);
+    return result;
+}
+
+// Get exhibition meta (with caching)
 export async function getExhibitionMeta(exhibitionCode: string): Promise<ExhibitionMeta | null> {
+    const cacheKey = `exhibition_meta:${exhibitionCode}`;
+
+    // Check cache first
+    const cachedMeta = cache.get<ExhibitionMeta>(cacheKey);
+    if (cachedMeta) {
+        return cachedMeta;
+    }
+
+    // Fetch from Firestore
     const docSnap = await getDoc(getExhibitionMetaRef(exhibitionCode));
     if (docSnap.exists()) {
-        return docSnap.data() as ExhibitionMeta;
+        const meta = docSnap.data() as ExhibitionMeta;
+        cache.set(cacheKey, meta, CACHE_TTL.EXHIBITION_META);
+        return meta;
     }
     return null;
 }
 
-// Check if exhibition exists
+// Check if exhibition exists (with caching)
 export async function exhibitionExists(exhibitionCode: string): Promise<boolean> {
+    const cacheKey = `exhibition_exists:${exhibitionCode}`;
+
+    // Check cache first
+    const cachedResult = cache.get<boolean>(cacheKey);
+    if (cachedResult !== null) {
+        return cachedResult;
+    }
+
+    // Fetch from Firestore
     const docSnap = await getDoc(getExhibitionRef(exhibitionCode));
-    return docSnap.exists();
+    const exists = docSnap.exists();
+    cache.set(cacheKey, exists, CACHE_TTL.EXHIBITION_EXISTS);
+    return exists;
 }
 
 // Get all exhibitions (for super admin)

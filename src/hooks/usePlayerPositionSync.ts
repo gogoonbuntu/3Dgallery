@@ -2,8 +2,8 @@ import { useRef } from 'react';
 import { useThree, useFrame } from '@react-three/fiber';
 import { usePositionUpdater } from './usePositionUpdater';
 
-// 위치 업데이트 간격 (ms)
-const UPDATE_INTERVAL = 100;
+// 위치 업데이트 간격 (ms) - Firestore 비용 최적화: 500ms
+const UPDATE_INTERVAL = 500;
 
 export function usePlayerPositionSync() {
     const { camera } = useThree();

@@ -1,5 +1,5 @@
 import { Suspense, useEffect, useState, useCallback, useRef } from 'react';
-import { Routes, Route, useParams, Navigate } from 'react-router-dom';
+import { Routes, Route, useParams, Navigate, useSearchParams } from 'react-router-dom';
 import { Canvas } from '@react-three/fiber';
 import { Scene } from './components/Scene';
 import { ArtworkInfoPanel } from './components/ui/ArtworkInfoPanel';
@@ -53,7 +53,8 @@ const debugLog = (phase: string, message: string, data?: unknown) => {
 // Exhibition page component
 function ExhibitionPage() {
   const { code } = useParams<{ code: string }>();
-  const { setExhibitionCode, isCloseUpMode, exitCloseUpMode, isAdmin, isAdminPanelOpen } = useGalleryStore();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const { setExhibitionCode, isCloseUpMode, exitCloseUpMode, isAdmin, isAdminPanelOpen, setAdminMode, toggleAdminPanel } = useGalleryStore();
   const [contextLost, setContextLost] = useState(false);
   const [canvasKey, setCanvasKey] = useState(0);
   const [isReady, setIsReady] = useState(false);
@@ -62,6 +63,7 @@ function ExhibitionPage() {
   const retryCount = useRef(0);
   const maxAutoRetries = 2;
   const initStartTime = useRef(Date.now());
+  const adminAutoLoginHandled = useRef(false);
 
   // Log component mount and phase changes
   useEffect(() => {
@@ -84,6 +86,27 @@ function ExhibitionPage() {
       debugLog('PHASE-1', 'Exhibition code set complete', { elapsed: Date.now() - initStartTime.current });
     }
   }, [code, setExhibitionCode]);
+
+  // Handle ?admin=1 query parameter for auto admin mode entry
+  useEffect(() => {
+    if (adminAutoLoginHandled.current) return;
+
+    const adminParam = searchParams.get('admin');
+    if (adminParam === '1' && isReady && !isAdmin) {
+      adminAutoLoginHandled.current = true;
+      debugLog('ADMIN', 'Auto admin mode requested via URL parameter');
+
+      // Set admin mode and open panel
+      setAdminMode(true);
+      if (!isAdminPanelOpen) {
+        toggleAdminPanel();
+      }
+
+      // Remove the admin query parameter from URL (clean up)
+      searchParams.delete('admin');
+      setSearchParams(searchParams, { replace: true });
+    }
+  }, [searchParams, setSearchParams, isReady, isAdmin, isAdminPanelOpen, setAdminMode, toggleAdminPanel]);
 
   // Phase 2: Initialize Firebase sync (with delay)
   const [firebaseReady, setFirebaseReady] = useState(false);
