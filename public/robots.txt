@@ -3,7 +3,7 @@ User-agent: *
 Allow: /
 
 # Sitemap
-Sitemap: https://your-domain.com/sitemap.xml
+Sitemap: https://3-dgallery.vercel.app/sitemap.xml
 
 # Disallow admin pages from indexing
 Disallow: /super-admin
