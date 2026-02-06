@@ -126,6 +126,11 @@ export interface ExhibitionMeta {
     adminPassword: string;  // Exhibition-specific admin password
     createdAt: string;
     isActive: boolean;
+    // New fields for improved UX
+    isSetupComplete?: boolean;  // Whether initial setup wizard was completed
+    inviteToken?: string;       // One-time invite token for first admin access
+    inviteTokenExpiry?: string; // Expiry date for invite token
+    description?: string;       // Exhibition description
 }
 
 // Generate unique 6-character code
@@ -137,6 +142,18 @@ export function generateExhibitionCode(): string {
     }
     return code;
 }
+
+// Generate secure invite token (32 characters)
+export function generateInviteToken(): string {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    let token = '';
+    for (let i = 0; i < 32; i++) {
+        token += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return token;
+}
+
+
 
 // Create new exhibition
 export async function createExhibition(title: string, hostEmail: string, adminPassword: string): Promise<string> {
@@ -154,6 +171,10 @@ export async function createExhibition(title: string, hostEmail: string, adminPa
         }
     }
 
+    // Generate invite token for first-time admin access
+    const inviteToken = generateInviteToken();
+    const inviteTokenExpiry = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(); // 7 days
+
     const meta: ExhibitionMeta = {
         code,
         title,
@@ -161,6 +182,9 @@ export async function createExhibition(title: string, hostEmail: string, adminPa
         adminPassword,  // Store the admin password
         createdAt: new Date().toISOString(),
         isActive: true,
+        isSetupComplete: false,
+        inviteToken,
+        inviteTokenExpiry,
     };
 
     // Create exhibition document with meta
@@ -192,6 +216,77 @@ export async function createExhibition(title: string, hostEmail: string, adminPa
 
     return code;
 }
+
+// Verify invite token and return true if valid
+export async function verifyInviteToken(exhibitionCode: string, token: string): Promise<boolean> {
+    const meta = await getExhibitionMeta(exhibitionCode);
+    if (!meta) return false;
+
+    // Check if token matches
+    if (meta.inviteToken !== token) return false;
+
+    // Check if token is expired
+    if (meta.inviteTokenExpiry) {
+        const expiry = new Date(meta.inviteTokenExpiry);
+        if (new Date() > expiry) return false;
+    }
+
+    return true;
+}
+
+// Consume invite token (invalidate after first use)
+export async function consumeInviteToken(exhibitionCode: string): Promise<void> {
+    const metaRef = getExhibitionMetaRef(exhibitionCode);
+    const docSnap = await getDoc(metaRef);
+    if (docSnap.exists()) {
+        const meta = docSnap.data() as ExhibitionMeta;
+        await setDoc(metaRef, {
+            ...meta,
+            inviteToken: null,
+            inviteTokenExpiry: null,
+        });
+        // Invalidate cache
+        cache.invalidate(`exhibition_meta:${exhibitionCode}`);
+    }
+}
+
+// Mark exhibition setup as complete
+export async function markSetupComplete(exhibitionCode: string): Promise<void> {
+    const metaRef = getExhibitionMetaRef(exhibitionCode);
+    const docSnap = await getDoc(metaRef);
+    if (docSnap.exists()) {
+        const meta = docSnap.data() as ExhibitionMeta;
+        await setDoc(metaRef, {
+            ...meta,
+            isSetupComplete: true,
+        });
+        // Invalidate cache
+        cache.invalidate(`exhibition_meta:${exhibitionCode}`);
+    }
+}
+
+// Update exhibition description
+export async function updateExhibitionDescription(exhibitionCode: string, description: string): Promise<void> {
+    const metaRef = getExhibitionMetaRef(exhibitionCode);
+    const docSnap = await getDoc(metaRef);
+    if (docSnap.exists()) {
+        const meta = docSnap.data() as ExhibitionMeta;
+        await setDoc(metaRef, {
+            ...meta,
+            description,
+        });
+        // Invalidate cache
+        cache.invalidate(`exhibition_meta:${exhibitionCode}`);
+    }
+}
+
+// Check if exhibition needs setup
+export async function needsSetup(exhibitionCode: string): Promise<boolean> {
+    const meta = await getExhibitionMeta(exhibitionCode);
+    if (!meta) return false;
+    return !meta.isSetupComplete;
+}
+
 
 // Verify exhibition admin password (with caching)
 export async function verifyExhibitionPassword(exhibitionCode: string, password: string): Promise<boolean> {

@@ -5,7 +5,7 @@ import { useGalleryStore } from '../store/galleryStore';
 import type { Artwork } from '../store/galleryStore';
 
 export function CloseUpCamera() {
-    const { camera } = useThree();
+    const { camera, gl } = useThree();
     const { isCloseUpMode, selectedArtwork } = useGalleryStore();
 
     const originalPosition = useRef(new THREE.Vector3());
@@ -17,10 +17,15 @@ export function CloseUpCamera() {
     const savedPosition = useRef<THREE.Vector3 | null>(null);
     const savedQuaternion = useRef<THREE.Quaternion | null>(null);
 
+    // Zoom state
+    const zoomLevel = useRef(1); // 1 = default, < 1 = zoomed in, > 1 = zoomed out
+    const baseDistance = useRef(3.5);
+    const currentZoomDistance = useRef(3.5);
+
     // Calculate target position based on artwork wall
-    const getTargetPositionForArtwork = useCallback((artwork: Artwork) => {
+    const getTargetPositionForArtwork = useCallback((artwork: Artwork, distance: number = 3.5) => {
         const { wall, position } = artwork;
-        const viewDistance = 3.5;
+        const viewDistance = distance;
         const viewHeight = position.y;
 
         const pos = new THREE.Vector3();
@@ -44,9 +49,36 @@ export function CloseUpCamera() {
         return { pos, lookAt };
     }, []);
 
+    // Handle zoom with mouse wheel
+    useEffect(() => {
+        if (!isCloseUpMode) return;
+
+        const handleWheel = (e: WheelEvent) => {
+            e.preventDefault();
+
+            // Adjust zoom level
+            const zoomDelta = e.deltaY * 0.001;
+            zoomLevel.current = Math.max(0.4, Math.min(1.5, zoomLevel.current + zoomDelta));
+
+            // Update current zoom distance
+            currentZoomDistance.current = baseDistance.current * zoomLevel.current;
+        };
+
+        const canvas = gl.domElement;
+        canvas.addEventListener('wheel', handleWheel, { passive: false });
+
+        return () => {
+            canvas.removeEventListener('wheel', handleWheel);
+        };
+    }, [isCloseUpMode, gl]);
+
     // Handle entering close-up mode
     useEffect(() => {
         if (isCloseUpMode && selectedArtwork) {
+            // Reset zoom level
+            zoomLevel.current = 1;
+            currentZoomDistance.current = baseDistance.current;
+
             // Save current camera state for returning later
             savedPosition.current = camera.position.clone();
             savedQuaternion.current = camera.quaternion.clone();
@@ -79,6 +111,14 @@ export function CloseUpCamera() {
     }, [isCloseUpMode, camera]);
 
     useFrame((_, delta) => {
+        // Handle zoom while in close-up mode (not transitioning)
+        if (isCloseUpMode && !isTransitioning.current && selectedArtwork) {
+            const target = getTargetPositionForArtwork(selectedArtwork, currentZoomDistance.current);
+            camera.position.lerp(target.pos, 0.1);
+            camera.lookAt(target.lookAt);
+            return;
+        }
+
         if (!isTransitioning.current) return;
 
         // Smooth transition
@@ -124,3 +164,4 @@ export function CloseUpCamera() {
 
     return null;
 }
+

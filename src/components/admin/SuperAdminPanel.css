@@ -271,6 +271,69 @@
     box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
 }
 
+/* Invite Section */
+.invite-section {
+    margin-top: 16px;
+    padding: 14px;
+    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+    border: 1px solid #f59e0b;
+    border-radius: 10px;
+}
+
+.invite-hint {
+    font-size: 0.9rem;
+    color: #92400e;
+    margin: 0 0 10px;
+}
+
+.invite-hint strong {
+    color: #78350f;
+}
+
+.invite-url-box {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: white;
+    padding: 10px 12px;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.invite-url-box code {
+    flex: 1;
+    font-size: 0.75rem;
+    color: #1a1a2e;
+    background: none;
+    padding: 0;
+    word-break: break-all;
+    overflow-wrap: anywhere;
+}
+
+.invite-url-box button {
+    padding: 6px 12px;
+    background: #f59e0b;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.8rem;
+    font-weight: 600;
+    flex-shrink: 0;
+}
+
+.invite-url-box button:hover {
+    background: #d97706;
+}
+
+.invite-note {
+    font-size: 0.8rem;
+    color: #92400e;
+    margin: 10px 0 0;
+    line-height: 1.5;
+}
+
+
 /* Exhibitions Section */
 .exhibitions-section {
     margin-top: 24px;

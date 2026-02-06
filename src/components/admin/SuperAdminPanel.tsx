@@ -35,6 +35,7 @@ export function SuperAdminPanel() {
     const [creating, setCreating] = useState(false);
     const [createdCode, setCreatedCode] = useState<string | null>(null);
     const [createdPassword, setCreatedPassword] = useState<string | null>(null);
+    const [createdInviteToken, setCreatedInviteToken] = useState<string | null>(null);
 
     // Auth state listener
     useEffect(() => {
@@ -95,8 +96,14 @@ export function SuperAdminPanel() {
         setCreating(true);
         try {
             const code = await createExhibition(newTitle.trim(), newHostEmail.trim(), newAdminPassword);
+
+            // Get the invite token from the created exhibition
+            const { getExhibitionMeta } = await import('../../lib/firebase');
+            const meta = await getExhibitionMeta(code);
+
             setCreatedCode(code);
             setCreatedPassword(newAdminPassword);
+            setCreatedInviteToken(meta?.inviteToken || null);
             setNewTitle('');
             setNewHostEmail('');
             setNewAdminPassword('');
@@ -234,8 +241,25 @@ export function SuperAdminPanel() {
                                 <button onClick={() => copyToClipboard(createdCode)}>복사</button>
                             </div>
                             <p className="url-hint">
-                                접속 URL: <code>{window.location.origin}/{createdCode}</code>
+                                방문자 URL: <code>{window.location.origin}/{createdCode}</code>
                             </p>
+                            {createdInviteToken && (
+                                <div className="invite-section">
+                                    <p className="invite-hint">
+                                        🔗 <strong>관리자 초대 링크</strong> (7일간 유효, 1회용):
+                                    </p>
+                                    <div className="invite-url-box">
+                                        <code>{window.location.origin}/{createdCode}?invite={createdInviteToken}</code>
+                                        <button onClick={() => copyToClipboard(`${window.location.origin}/${createdCode}?invite=${createdInviteToken}`)}>
+                                            복사
+                                        </button>
+                                    </div>
+                                    <p className="invite-note">
+                                        ⚠️ 이 링크를 호스트에게 전달해주세요. 호스트가 링크를 클릭하면<br />
+                                        초기 설정 마법사가 시작되고 관리자 권한이 부여됩니다.
+                                    </p>
+                                </div>
+                            )}
                             {createdPassword && (
                                 <p className="password-hint">
                                     🔐 관리자 비밀번호: <code>{createdPassword}</code>
@@ -248,12 +272,14 @@ export function SuperAdminPanel() {
                                 >
                                     전시회 방문 →
                                 </button>
-                                <button
-                                    className="setup-btn"
-                                    onClick={() => navigate(`/${createdCode}?admin=1`)}
-                                >
-                                    ⚙️ 전시회 설정하러 가기
-                                </button>
+                                {createdInviteToken && (
+                                    <button
+                                        className="setup-btn"
+                                        onClick={() => navigate(`/${createdCode}?invite=${createdInviteToken}`)}
+                                    >
+                                        ⚙️ 전시회 설정하러 가기
+                                    </button>
+                                )}
                             </div>
                         </div>
                     )}

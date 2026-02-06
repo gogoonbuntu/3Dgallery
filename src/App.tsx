@@ -14,6 +14,7 @@ import { BrandWatermark } from './components/ui/BrandWatermark';
 import { AdminAuth } from './components/admin/AdminAuth';
 import { AdminPanel } from './components/admin/AdminPanel';
 import { SuperAdminPanel } from './components/admin/SuperAdminPanel';
+import { SetupWizard } from './components/admin/SetupWizard';
 import { useGalleryStore } from './store/galleryStore';
 import { useFirebaseSync } from './hooks/useFirebaseSync';
 import { useMultiplayerSync } from './hooks/useMultiplayerSync';
@@ -87,26 +88,57 @@ function ExhibitionPage() {
     }
   }, [code, setExhibitionCode]);
 
-  // Handle ?admin=1 query parameter for auto admin mode entry
+  // Handle ?invite=token query parameter for first-time admin access via invite link
+  const [showSetupWizard, setShowSetupWizard] = useState(false);
+  const [inviteVerifying, setInviteVerifying] = useState(false);
+
   useEffect(() => {
     if (adminAutoLoginHandled.current) return;
+    if (!code || !isReady) return;
 
-    const adminParam = searchParams.get('admin');
-    if (adminParam === '1' && isReady && !isAdmin) {
+    const inviteToken = searchParams.get('invite');
+    if (inviteToken) {
       adminAutoLoginHandled.current = true;
-      debugLog('ADMIN', 'Auto admin mode requested via URL parameter');
+      setInviteVerifying(true);
+      debugLog('ADMIN', 'Invite token found, verifying...');
 
-      // Set admin mode and open panel
-      setAdminMode(true);
-      if (!isAdminPanelOpen) {
-        toggleAdminPanel();
-      }
+      // Dynamically import to avoid circular dependency
+      import('./lib/firebase').then(async ({ verifyInviteToken, consumeInviteToken, needsSetup }) => {
+        try {
+          const isValid = await verifyInviteToken(code, inviteToken);
+          if (isValid) {
+            debugLog('ADMIN', 'Invite token valid, granting admin access');
 
-      // Remove the admin query parameter from URL (clean up)
-      searchParams.delete('admin');
-      setSearchParams(searchParams, { replace: true });
+            // Consume the token (one-time use)
+            await consumeInviteToken(code);
+
+            // Grant admin access
+            setAdminMode(true);
+
+            // Check if setup is needed
+            const setupNeeded = await needsSetup(code);
+            if (setupNeeded) {
+              setShowSetupWizard(true);
+            } else if (!isAdminPanelOpen) {
+              toggleAdminPanel();
+            }
+          } else {
+            debugLog('ADMIN', 'Invite token invalid or expired');
+            alert('초대 링크가 만료되었거나 유효하지 않습니다.');
+          }
+        } catch (error) {
+          console.error('Error verifying invite token:', error);
+          alert('초대 링크 확인 중 오류가 발생했습니다.');
+        } finally {
+          setInviteVerifying(false);
+          // Remove the invite query parameter from URL (clean up)
+          searchParams.delete('invite');
+          setSearchParams(searchParams, { replace: true });
+        }
+      });
     }
-  }, [searchParams, setSearchParams, isReady, isAdmin, isAdminPanelOpen, setAdminMode, toggleAdminPanel]);
+  }, [code, searchParams, setSearchParams, isReady, isAdmin, isAdminPanelOpen, setAdminMode, toggleAdminPanel]);
+
 
   // Phase 2: Initialize Firebase sync (with delay)
   const [firebaseReady, setFirebaseReady] = useState(false);
@@ -284,6 +316,25 @@ function ExhibitionPage() {
 
       {/* Admin Panel */}
       {isAdmin && <AdminPanel />}
+
+      {/* Setup Wizard for first-time admin setup */}
+      {showSetupWizard && code && (
+        <SetupWizard
+          exhibitionCode={code}
+          onComplete={() => {
+            setShowSetupWizard(false);
+            toggleAdminPanel();
+          }}
+        />
+      )}
+
+      {/* Loading overlay for invite verification */}
+      {inviteVerifying && (
+        <div className="loading-screen" style={{ position: 'fixed', zIndex: 20000 }}>
+          <div className="loading-spinner"></div>
+          <p>초대 링크 확인 중...</p>
+        </div>
+      )}
     </div>
   );
 }
