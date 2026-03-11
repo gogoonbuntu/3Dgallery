@@ -645,6 +645,12 @@ export function AdminPanel() {
 
                 <div className="admin-panel-footer">
                     <p className="save-note">✓ 모든 변경사항이 자동 저장됩니다</p>
+                    <a
+                        href="mailto:tmddud333@naver.com?subject=[온전] 건의사항/버그 리포트&body=안녕하세요,%0A%0A[건의사항/버그 내용을 작성해주세요]%0A%0A----%0A전시회 코드: "
+                        className="feedback-link"
+                    >
+                        💬 건의사항 · 버그 리포트
+                    </a>
                 </div>
             </div>
         </div>

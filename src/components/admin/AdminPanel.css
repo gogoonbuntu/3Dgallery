@@ -425,6 +425,10 @@
     padding: 16px;
     border-top: 1px solid #eee;
     background: #fafafa;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
 }
 
 .save-note {
@@ -433,6 +437,27 @@
     color: #27ae60;
     text-align: center;
 }
+
+.feedback-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    background: linear-gradient(135deg, #f0f0f0 0%, #e8e8e8 100%);
+    border-radius: 20px;
+    font-size: 0.8rem;
+    color: #555;
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+
+.feedback-link:hover {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    transform: translateY(-1px);
+    box-shadow: 0 3px 10px rgba(102, 126, 234, 0.3);
+}
+
 
 /* Lighting Controls */
 .lighting-section {
