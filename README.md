@@ -1,3 +1,5 @@
+온전하게 전달되는 예술 — 몰입감 있는 3D 가상 전시회 플랫폼
+
 <p align="center">
   <img src="screenshots/hero_banner.png" alt="온전 Onliex - 3D Virtual Art Gallery" width="100%" />
 </p>
