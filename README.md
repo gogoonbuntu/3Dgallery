@@ -35,7 +35,12 @@
 ---
 
 <p align="center">
-  <img src="screenshots/gallery_features.png" alt="주요 기능 소개" width="90%" />
+  <img src="screenshots/gallery_angle_view.png" alt="3D 갤러리 공간 - 측면 앵글" width="45%" />
+  <img src="screenshots/artwork_closeup.png" alt="작품 클릭 시 상세 정보 패널" width="45%" />
+</p>
+
+<p align="center">
+  <em>좌: 몰입형 3D 갤러리 공간 &nbsp;|&nbsp; 우: 작품 클릭 시 상세 정보 패널 (제목, 작가, 연도, 설명)</em>
 </p>
 
 ---
@@ -126,6 +131,25 @@
 - **Undo/Redo 지원**: 설정 변경 히스토리 관리
 - **초대 링크 시스템**: 1회용 토큰 기반 보안 초대
 - **Super Admin**: 전체 전시 관리, 신규 전시 생성/삭제
+
+<p align="center">
+  <img src="screenshots/admin_login.png" alt="관리자 로그인 모달" width="45%" />
+  <img src="screenshots/admin_panel.png" alt="관리자 패널 - 설정 탭" width="45%" />
+</p>
+<p align="center">
+  <em>좌: 관리자 로그인 (비밀번호 기반 인증) &nbsp;|&nbsp; 우: 설정 탭 - 벽지 색상, 패턴, 바닥 재질 커스터마이징</em>
+</p>
+
+<p align="center">
+  <img src="screenshots/admin_stats.png" alt="관리자 패널 - 통계 탭" width="45%" />
+  <img src="screenshots/admin_artworks.png" alt="관리자 패널 - 작품 관리 탭" width="45%" />
+</p>
+<p align="center">
+  <em>좌: 통계 탭 - 방문자 수, 고유 방문자, 평균 체류 시간 대시보드 &nbsp;|&nbsp; 우: 작품 관리 - 작품 추가/편집/삭제</em>
+</p>
+
+> 관리자 패널은 5개의 탭(통계 · 설정 · 작품 · 광고 · 방명록)으로 구성되어 있으며,
+> 모든 변경사항은 갤러리에 **실시간으로 반영**됩니다.
 
 ### 📱 모바일 최적화
 
