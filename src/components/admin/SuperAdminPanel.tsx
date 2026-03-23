@@ -42,10 +42,15 @@ export function SuperAdminPanel() {
         const unsubscribe = onAuthStateChanged(auth, async (user) => {
             setUser(user);
             if (user && user.email) {
-                const authorized = await isSuperAdmin(user.email);
-                setIsAuthorized(authorized);
-                if (authorized) {
-                    loadExhibitions();
+                try {
+                    const authorized = await isSuperAdmin(user.email);
+                    setIsAuthorized(authorized);
+                    if (authorized) {
+                        loadExhibitions();
+                    }
+                } catch (error) {
+                    console.error('Failed to check super admin status:', error);
+                    setIsAuthorized(false);
                 }
             } else {
                 setIsAuthorized(false);
