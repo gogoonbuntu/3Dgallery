@@ -10,7 +10,8 @@ import {
 } from '../../lib/firebase';
 import {
     signInWithEmailAndPassword,
-    signInWithPopup,
+    signInWithRedirect,
+    getRedirectResult,
     GoogleAuthProvider,
     signOut,
     onAuthStateChanged,
@@ -42,6 +43,20 @@ export function SuperAdminPanel() {
 
     // Auth state listener
     useEffect(() => {
+        // Handle redirect result first
+        getRedirectResult(auth).then(async (result) => {
+            if (result?.user) {
+                // Redirect login succeeded, onAuthStateChanged will handle the rest
+                console.log('Google redirect login succeeded:', result.user.email);
+            }
+        }).catch((error) => {
+            console.error('Redirect result error:', error);
+            if (error.code === 'auth/unauthorized-domain') {
+                setLoginError('이 도메인은 Firebase에서 승인되지 않았습니다. Firebase Console → Authentication → Settings → Authorized domains에서 도메인을 추가하세요.');
+            }
+            setLoading(false);
+        });
+
         const unsubscribe = onAuthStateChanged(auth, async (user) => {
             setUser(user);
             if (user && user.email) {
@@ -89,18 +104,15 @@ export function SuperAdminPanel() {
         setGoogleLoading(true);
         try {
             const provider = new GoogleAuthProvider();
-            await signInWithPopup(auth, provider);
+            await signInWithRedirect(auth, provider);
         } catch (error: unknown) {
             const firebaseError = error as { code?: string };
-            if (firebaseError.code === 'auth/popup-closed-by-user') {
-                // User closed popup, no error needed
-            } else if (firebaseError.code === 'auth/unauthorized-domain') {
+            if (firebaseError.code === 'auth/unauthorized-domain') {
                 setLoginError('이 도메인은 Firebase에서 승인되지 않았습니다. Firebase Console → Authentication → Settings → Authorized domains에서 도메인을 추가하세요.');
             } else {
                 setLoginError('Google 로그인 실패. 다시 시도해주세요.');
                 console.error('Google login error:', error);
             }
-        } finally {
             setGoogleLoading(false);
         }
     };
