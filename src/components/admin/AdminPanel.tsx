@@ -44,18 +44,33 @@ export function AdminPanel() {
     const [isDraggingFile, setIsDraggingFile] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
-    // Initial state for new artwork
-    const [newArtwork, setNewArtwork] = useState<Omit<Artwork, 'id'>>({
+    // Find the wall with fewest artworks (A→B→C priority)
+    const getNextAvailableWall = (): 'A' | 'B' | 'C' => {
+        const perWall = gallerySettings.artworksPerWall;
+        const counts = { A: 0, B: 0, C: 0 };
+        artworks.forEach(a => { if (counts[a.wall] !== undefined) counts[a.wall]++; });
+        if (counts.A < perWall) return 'A';
+        if (counts.B < perWall) return 'B';
+        if (counts.C < perWall) return 'C';
+        // All full — pick the one with fewest
+        const walls: ('A' | 'B' | 'C')[] = ['A', 'B', 'C'];
+        return walls.sort((a, b) => counts[a] - counts[b])[0];
+    };
+
+    const getDefaultArtwork = (): Omit<Artwork, 'id'> => ({
         title: '',
         artist: '',
         description: '',
         year: new Date().getFullYear().toString(),
         imageUrl: '',
-        wall: 'A',
+        wall: getNextAvailableWall(),
         position: { x: 0, y: 1.5 },
-        frameStyle: undefined,
+        frameStyle: gallerySettings.frameStyle,
         frameColor: undefined,
     });
+
+    // Initial state for new artwork
+    const [newArtwork, setNewArtwork] = useState<Omit<Artwork, 'id'>>(getDefaultArtwork());
 
     if (!isAdminPanelOpen) return null;
 
@@ -75,17 +90,7 @@ export function AdminPanel() {
             setIsAddingArtwork(false);
             setPreviewUrl(null);
             setUploadProgress(null);
-            setNewArtwork({
-                title: '',
-                artist: '',
-                description: '',
-                year: new Date().getFullYear().toString(),
-                imageUrl: '',
-                wall: 'A',
-                position: { x: 0, y: 1.5 },
-                frameStyle: undefined,
-                frameColor: undefined,
-            });
+            setNewArtwork(getDefaultArtwork());
         } catch (error) {
             console.error('Failed to add artwork:', error);
             alert('작품 추가에 실패했습니다.');
