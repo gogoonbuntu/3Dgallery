@@ -439,7 +439,14 @@ export async function loadExhibitionArtworks(exhibitionCode: string) {
 }
 
 export async function saveExhibitionArtwork(exhibitionCode: string, artwork: { id: string;[key: string]: unknown }) {
-    await setDoc(doc(getExhibitionArtworksCollection(exhibitionCode), artwork.id), artwork);
+    // Strip undefined values (Firestore rejects them)
+    const cleanData: Record<string, unknown> = {};
+    for (const [key, value] of Object.entries(artwork)) {
+        if (value !== undefined) {
+            cleanData[key] = value;
+        }
+    }
+    await setDoc(doc(getExhibitionArtworksCollection(exhibitionCode), artwork.id), cleanData);
 }
 
 export async function deleteExhibitionArtwork(exhibitionCode: string, id: string) {

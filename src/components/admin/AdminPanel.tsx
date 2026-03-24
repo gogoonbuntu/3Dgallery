@@ -61,21 +61,35 @@ export function AdminPanel() {
 
     const handleAddArtwork = () => {
         if (!newArtwork.title || !newArtwork.imageUrl) return alert('제목과 이미지는 필수입니다.');
-        addArtwork(newArtwork);
-        setIsAddingArtwork(false);
-        setPreviewUrl(null);
-        setUploadProgress(null);
-        setNewArtwork({
-            title: '',
-            artist: '',
-            description: '',
-            year: new Date().getFullYear().toString(),
-            imageUrl: '',
-            wall: 'A',
-            position: { x: 0, y: 1.5 },
-            frameStyle: undefined,
-            frameColor: undefined,
-        });
+        if (uploadProgress !== null && uploadProgress < 100) return alert('이미지 업로드 중입니다. 완료 후 저장해주세요.');
+
+        try {
+            // Clean undefined values (Firestore rejects undefined)
+            const cleanArtwork: Record<string, unknown> = {};
+            for (const [key, value] of Object.entries(newArtwork)) {
+                if (value !== undefined) {
+                    cleanArtwork[key] = value;
+                }
+            }
+            addArtwork(cleanArtwork as Omit<Artwork, 'id'>);
+            setIsAddingArtwork(false);
+            setPreviewUrl(null);
+            setUploadProgress(null);
+            setNewArtwork({
+                title: '',
+                artist: '',
+                description: '',
+                year: new Date().getFullYear().toString(),
+                imageUrl: '',
+                wall: 'A',
+                position: { x: 0, y: 1.5 },
+                frameStyle: undefined,
+                frameColor: undefined,
+            });
+        } catch (error) {
+            console.error('Failed to add artwork:', error);
+            alert('작품 추가에 실패했습니다.');
+        }
     };
 
     const handleFileUpload = async (file: File) => {
