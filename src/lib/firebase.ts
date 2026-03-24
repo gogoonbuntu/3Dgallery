@@ -382,11 +382,17 @@ export const superAdminsCollection = collection(db, 'superAdmins');
 
 export async function isSuperAdmin(email: string): Promise<boolean> {
     try {
-        // Use direct document access (same ID pattern as addSuperAdmin)
+        // 1) Try direct document access (same ID pattern as addSuperAdmin)
         const docId = email.replace(/[.@]/g, '_');
         const docRef = doc(db, 'superAdmins', docId);
         const docSnap = await getDoc(docRef);
-        return docSnap.exists() && docSnap.data()?.email === email;
+        if (docSnap.exists() && docSnap.data()?.email === email) {
+            return true;
+        }
+
+        // 2) Fallback: scan all docs (handles manually added entries with different IDs)
+        const snapshot = await getDocs(superAdminsCollection);
+        return snapshot.docs.some(d => d.data()?.email === email);
     } catch (error) {
         console.error('isSuperAdmin check failed:', error);
         return false;
