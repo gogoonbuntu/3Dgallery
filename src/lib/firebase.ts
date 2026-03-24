@@ -1,6 +1,6 @@
 // Firebase configuration for 3D Gallery - Multi-Exhibition Support
 import { initializeApp } from 'firebase/app';
-import { getFirestore, collection, doc, getDocs, setDoc, deleteDoc, onSnapshot, query, where, getDoc } from 'firebase/firestore';
+import { getFirestore, collection, doc, getDocs, setDoc, deleteDoc, onSnapshot, getDoc } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
 
 const firebaseConfig = {
@@ -381,9 +381,16 @@ export async function deleteExhibition(exhibitionCode: string): Promise<void> {
 export const superAdminsCollection = collection(db, 'superAdmins');
 
 export async function isSuperAdmin(email: string): Promise<boolean> {
-    const q = query(superAdminsCollection, where('email', '==', email));
-    const snapshot = await getDocs(q);
-    return !snapshot.empty;
+    try {
+        // Use direct document access (same ID pattern as addSuperAdmin)
+        const docId = email.replace(/[.@]/g, '_');
+        const docRef = doc(db, 'superAdmins', docId);
+        const docSnap = await getDoc(docRef);
+        return docSnap.exists() && docSnap.data()?.email === email;
+    } catch (error) {
+        console.error('isSuperAdmin check failed:', error);
+        return false;
+    }
 }
 
 export async function addSuperAdmin(email: string): Promise<void> {
