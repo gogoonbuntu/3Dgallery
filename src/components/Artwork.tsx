@@ -1,9 +1,36 @@
-import { useRef, useState, useMemo, memo, useCallback } from 'react';
+import { useRef, useState, useMemo, memo, useCallback, Suspense, Component } from 'react';
+import type { ReactNode, ErrorInfo } from 'react';
 import { useLoader, useFrame } from '@react-three/fiber';
 import type { ThreeEvent } from '@react-three/fiber';
 import * as THREE from 'three';
 import { useGalleryStore } from '../store/galleryStore';
 import type { Artwork as ArtworkType, FrameStyle } from '../store/galleryStore';
+
+// Error boundary to prevent a single broken artwork from crashing the gallery
+class ArtworkErrorBoundary extends Component<
+    { children: ReactNode; artworkId: string },
+    { hasError: boolean }
+> {
+    constructor(props: { children: ReactNode; artworkId: string }) {
+        super(props);
+        this.state = { hasError: false };
+    }
+
+    static getDerivedStateFromError() {
+        return { hasError: true };
+    }
+
+    componentDidCatch(error: Error, info: ErrorInfo) {
+        console.warn(`Artwork ${this.props.artworkId} render error:`, error, info);
+    }
+
+    render() {
+        if (this.state.hasError) {
+            return null; // Just hide the broken artwork
+        }
+        return this.props.children;
+    }
+}
 
 interface ArtworkProps {
     artwork: ArtworkType;
@@ -268,7 +295,11 @@ export function ArtworkCollection() {
     return (
         <group>
             {artworks.map((artwork) => (
-                <ArtworkItem key={artwork.id} artwork={artwork} />
+                <ArtworkErrorBoundary key={artwork.id} artworkId={artwork.id}>
+                    <Suspense fallback={null}>
+                        <ArtworkItem artwork={artwork} />
+                    </Suspense>
+                </ArtworkErrorBoundary>
             ))}
         </group>
     );
