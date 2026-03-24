@@ -378,6 +378,122 @@
     color: #666;
 }
 
+/* Image Upload Mode Toggle */
+.image-mode-toggle {
+    display: flex;
+    gap: 4px;
+    background: #f0f0f0;
+    border-radius: 10px;
+    padding: 3px;
+}
+
+.image-mode-toggle .mode-btn {
+    flex: 1;
+    padding: 8px 12px;
+    border: none;
+    background: transparent;
+    border-radius: 8px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #888;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.image-mode-toggle .mode-btn.active {
+    background: white;
+    color: #667eea;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* File Dropzone */
+.file-dropzone {
+    border: 2px dashed #d0d5e5;
+    border-radius: 12px;
+    padding: 24px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    background: #fafbff;
+    min-height: 100px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.file-dropzone:hover {
+    border-color: #667eea;
+    background: rgba(102, 126, 234, 0.05);
+}
+
+.file-dropzone.dragging {
+    border-color: #667eea;
+    background: rgba(102, 126, 234, 0.1);
+    transform: scale(1.02);
+}
+
+.file-dropzone.has-preview {
+    padding: 8px;
+}
+
+.dropzone-placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    color: #888;
+    font-size: 0.85rem;
+}
+
+.dropzone-icon {
+    font-size: 2rem;
+}
+
+.dropzone-hint {
+    font-size: 0.7rem;
+    color: #bbb;
+}
+
+/* Upload Preview */
+.upload-preview {
+    position: relative;
+    width: 100%;
+}
+
+.upload-preview img {
+    width: 100%;
+    max-height: 160px;
+    object-fit: contain;
+    border-radius: 8px;
+}
+
+.upload-progress {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: #e0e0e0;
+    border-radius: 0 0 8px 8px;
+    overflow: hidden;
+}
+
+.upload-progress .progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, #667eea, #764ba2);
+    border-radius: 4px;
+    transition: width 0.3s ease;
+}
+
+.upload-done {
+    display: block;
+    text-align: center;
+    font-size: 0.8rem;
+    color: #27ae60;
+    margin-top: 6px;
+    font-weight: 600;
+}
+
 /* Guestbook Management */
 .admin-messages-list {
     display: flex;

@@ -78,7 +78,9 @@ const CACHE_TTL = {
     EXHIBITION_META: 5 * 60 * 1000,    // 5 minutes
     EXHIBITION_EXISTS: 10 * 60 * 1000, // 10 minutes  
     SETTINGS: 60 * 1000,               // 1 minute
-    PASSWORD_VERIFIED: 30 * 60 * 1000, // 30 minutes (once verified, cache it)
+    PASSWORD_VERIFIED: 30 * 60 * 1000, // 30 minutes
+    SUPER_ADMIN: 5 * 60 * 1000,        // 5 minutes
+    ALL_EXHIBITIONS: 60 * 1000,        // 1 minute
 };
 
 // ============================================
@@ -213,6 +215,9 @@ export async function createExhibition(title: string, hostEmail: string, adminPa
         }
     };
     await setDoc(getExhibitionSettingsRef(code), defaultSettings);
+
+    // Invalidate exhibitions cache
+    cache.invalidate('all_exhibitions');
 
     return code;
 }
@@ -352,8 +357,14 @@ export async function exhibitionExists(exhibitionCode: string): Promise<boolean>
     return exists;
 }
 
-// Get all exhibitions (for super admin)
+// Get all exhibitions (for super admin, with caching)
 export async function getAllExhibitions(): Promise<ExhibitionMeta[]> {
+    const cacheKey = 'all_exhibitions';
+    const cachedResult = cache.get<ExhibitionMeta[]>(cacheKey);
+    if (cachedResult) {
+        return cachedResult;
+    }
+
     const exhibitions: ExhibitionMeta[] = [];
     const snapshot = await getDocs(collection(db, 'exhibitions'));
 
@@ -364,14 +375,17 @@ export async function getAllExhibitions(): Promise<ExhibitionMeta[]> {
         }
     }
 
+    cache.set(cacheKey, exhibitions, CACHE_TTL.ALL_EXHIBITIONS);
     return exhibitions;
 }
 
 // Delete exhibition
 export async function deleteExhibition(exhibitionCode: string): Promise<void> {
-    // Note: This only deletes the main document. 
-    // Subcollections need to be deleted separately or via Cloud Functions
     await deleteDoc(getExhibitionRef(exhibitionCode));
+    // Invalidate caches
+    cache.invalidate('all_exhibitions');
+    cache.invalidatePrefix(`exhibition_meta:${exhibitionCode}`);
+    cache.invalidatePrefix(`exhibition_exists:${exhibitionCode}`);
 }
 
 // ============================================
@@ -381,18 +395,28 @@ export async function deleteExhibition(exhibitionCode: string): Promise<void> {
 export const superAdminsCollection = collection(db, 'superAdmins');
 
 export async function isSuperAdmin(email: string): Promise<boolean> {
+    // Check cache first
+    const cacheKey = `super_admin:${email}`;
+    const cachedResult = cache.get<boolean>(cacheKey);
+    if (cachedResult !== null) {
+        return cachedResult;
+    }
+
     try {
         // 1) Try direct document access (same ID pattern as addSuperAdmin)
         const docId = email.replace(/[.@]/g, '_');
         const docRef = doc(db, 'superAdmins', docId);
         const docSnap = await getDoc(docRef);
         if (docSnap.exists() && docSnap.data()?.email === email) {
+            cache.set(cacheKey, true, CACHE_TTL.SUPER_ADMIN);
             return true;
         }
 
         // 2) Fallback: scan all docs (handles manually added entries with different IDs)
         const snapshot = await getDocs(superAdminsCollection);
-        return snapshot.docs.some(d => d.data()?.email === email);
+        const found = snapshot.docs.some(d => d.data()?.email === email);
+        cache.set(cacheKey, found, CACHE_TTL.SUPER_ADMIN);
+        return found;
     } catch (error) {
         console.error('isSuperAdmin check failed:', error);
         return false;

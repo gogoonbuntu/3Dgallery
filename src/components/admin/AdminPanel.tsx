@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useGalleryStore } from '../../store/galleryStore';
 import type { Artwork } from '../../store/galleryStore';
 import { WALL_COLORS, WALL_PATTERNS, FLOOR_TEXTURES, FRAME_STYLES } from '../../constants/galleryOptions';
+import { uploadArtworkImage } from '../../lib/imageUpload';
 import './AdminPanel.css';
 
 
@@ -36,6 +37,13 @@ export function AdminPanel() {
     const [isAddingArtwork, setIsAddingArtwork] = useState(false);
     const [isDraggingLighting, setIsDraggingLighting] = useState(false);
 
+    // Image upload states
+    const [uploadMode, setUploadMode] = useState<'url' | 'file'>('file');
+    const [uploadProgress, setUploadProgress] = useState<number | null>(null);
+    const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+    const [isDraggingFile, setIsDraggingFile] = useState(false);
+    const fileInputRef = useRef<HTMLInputElement>(null);
+
     // Initial state for new artwork
     const [newArtwork, setNewArtwork] = useState<Omit<Artwork, 'id'>>({
         title: '',
@@ -52,9 +60,11 @@ export function AdminPanel() {
     if (!isAdminPanelOpen) return null;
 
     const handleAddArtwork = () => {
-        if (!newArtwork.title || !newArtwork.imageUrl) return alert('제목과 이미지 URL은 필수입니다.');
+        if (!newArtwork.title || !newArtwork.imageUrl) return alert('제목과 이미지는 필수입니다.');
         addArtwork(newArtwork);
         setIsAddingArtwork(false);
+        setPreviewUrl(null);
+        setUploadProgress(null);
         setNewArtwork({
             title: '',
             artist: '',
@@ -66,6 +76,45 @@ export function AdminPanel() {
             frameStyle: undefined,
             frameColor: undefined,
         });
+    };
+
+    const handleFileUpload = async (file: File) => {
+        if (!file.type.startsWith('image/')) {
+            alert('이미지 파일만 업로드할 수 있습니다.');
+            return;
+        }
+        if (file.size > 20 * 1024 * 1024) {
+            alert('파일 크기는 20MB 이하만 가능합니다.');
+            return;
+        }
+
+        // Show preview
+        const preview = URL.createObjectURL(file);
+        setPreviewUrl(preview);
+        setUploadProgress(0);
+
+        try {
+            const { currentExhibitionCode } = useGalleryStore.getState();
+            const downloadUrl = await uploadArtworkImage(
+                currentExhibitionCode,
+                file,
+                (percent) => setUploadProgress(percent)
+            );
+            setNewArtwork(prev => ({ ...prev, imageUrl: downloadUrl }));
+            setUploadProgress(100);
+        } catch (error) {
+            console.error('Upload failed:', error);
+            alert('이미지 업로드에 실패했습니다.');
+            setPreviewUrl(null);
+            setUploadProgress(null);
+        }
+    };
+
+    const handleDrop = (e: React.DragEvent) => {
+        e.preventDefault();
+        setIsDraggingFile(false);
+        const file = e.dataTransfer.files[0];
+        if (file) handleFileUpload(file);
     };
 
     return (
@@ -342,10 +391,71 @@ export function AdminPanel() {
                             ) : (
                                 <div className="artwork-form edit-card">
                                     <h4>새 작품 정보</h4>
-                                    <div className="input-group">
-                                        <label>이미지 URL</label>
-                                        <input type="text" value={newArtwork.imageUrl} onChange={e => setNewArtwork({ ...newArtwork, imageUrl: e.target.value })} placeholder="https://..." />
+
+                                    {/* Image input mode toggle */}
+                                    <div className="image-mode-toggle">
+                                        <button
+                                            className={`mode-btn ${uploadMode === 'file' ? 'active' : ''}`}
+                                            onClick={() => setUploadMode('file')}
+                                        >
+                                            📁 파일 업로드
+                                        </button>
+                                        <button
+                                            className={`mode-btn ${uploadMode === 'url' ? 'active' : ''}`}
+                                            onClick={() => setUploadMode('url')}
+                                        >
+                                            🔗 URL 입력
+                                        </button>
                                     </div>
+
+                                    {uploadMode === 'file' ? (
+                                        <div className="input-group">
+                                            <label>이미지 파일</label>
+                                            <div
+                                                className={`file-dropzone ${isDraggingFile ? 'dragging' : ''} ${previewUrl ? 'has-preview' : ''}`}
+                                                onDragOver={(e) => { e.preventDefault(); setIsDraggingFile(true); }}
+                                                onDragLeave={() => setIsDraggingFile(false)}
+                                                onDrop={handleDrop}
+                                                onClick={() => fileInputRef.current?.click()}
+                                            >
+                                                {previewUrl ? (
+                                                    <div className="upload-preview">
+                                                        <img src={previewUrl} alt="미리보기" />
+                                                        {uploadProgress !== null && uploadProgress < 100 && (
+                                                            <div className="upload-progress">
+                                                                <div className="progress-bar" style={{ width: `${uploadProgress}%` }} />
+                                                            </div>
+                                                        )}
+                                                        {uploadProgress === 100 && (
+                                                            <span className="upload-done">✅ 업로드 완료</span>
+                                                        )}
+                                                    </div>
+                                                ) : (
+                                                    <div className="dropzone-placeholder">
+                                                        <span className="dropzone-icon">📷</span>
+                                                        <span>클릭 또는 드래그하여 이미지 추가</span>
+                                                        <span className="dropzone-hint">최대 20MB, 자동 리사이즈 및 WebP 변환</span>
+                                                    </div>
+                                                )}
+                                                <input
+                                                    ref={fileInputRef}
+                                                    type="file"
+                                                    accept="image/*"
+                                                    style={{ display: 'none' }}
+                                                    onChange={(e) => {
+                                                        const file = e.target.files?.[0];
+                                                        if (file) handleFileUpload(file);
+                                                    }}
+                                                />
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <div className="input-group">
+                                            <label>이미지 URL</label>
+                                            <input type="text" value={newArtwork.imageUrl} onChange={e => setNewArtwork({ ...newArtwork, imageUrl: e.target.value })} placeholder="https://..." />
+                                        </div>
+                                    )}
+
                                     <div className="input-row">
                                         <div className="input-group">
                                             <label>제목</label>

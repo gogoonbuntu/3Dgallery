@@ -241,7 +241,7 @@ export function useFirebaseSync(enabled: boolean = true) {
         prevMessages.current = guestMessages;
     }, [guestMessages, currentExhibitionCode]);
 
-    // Sync settings (only when NOT receiving from Firebase)
+    // Sync settings (only when NOT receiving from Firebase, with debounce)
     useEffect(() => {
         if (!currentExhibitionCode || isReceivingFromFirebase) return;
 
@@ -253,8 +253,13 @@ export function useFirebaseSync(enabled: boolean = true) {
         }
 
         if (JSON.stringify(prevSettings.current) !== JSON.stringify(currentSettings)) {
-            saveExhibitionSettings(currentExhibitionCode, currentSettings).catch(console.error);
-            prevSettings.current = currentSettings;
+            // Debounce: wait 500ms after last change before saving
+            const timer = setTimeout(() => {
+                saveExhibitionSettings(currentExhibitionCode, currentSettings).catch(console.error);
+                prevSettings.current = currentSettings;
+            }, 500);
+
+            return () => clearTimeout(timer);
         }
     }, [gallerySettings, musicSettings, currentExhibitionCode]);
 }
