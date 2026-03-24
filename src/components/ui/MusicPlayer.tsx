@@ -24,9 +24,10 @@ export function MusicPlayer() {
     const { isPlaying, volume, currentTrackIndex, playerDesign, youtubeUrl } = musicSettings;
     const [inputUrl, setInputUrl] = useState(youtubeUrl || '');
     const [isYoutubeMode, setIsYoutubeMode] = useState(!!youtubeUrl);
+    const [isVisible, setIsVisible] = useState(true);
 
     // Hide during close-up mode
-    if (isCloseUpMode) return null;
+    if (isCloseUpMode || !isVisible) return null;
 
     const currentTrack = MUSIC_TRACKS[currentTrackIndex];
 
@@ -64,6 +65,15 @@ export function MusicPlayer() {
 
     return (
         <div className="music-player compact">
+            {/* Close Button */}
+            <button
+                className="music-player-close"
+                onClick={() => setIsVisible(false)}
+                title="닫기"
+            >
+                ✕
+            </button>
+
             {/* Design Toggle */}
             <div className="design-toggle">
                 <button
