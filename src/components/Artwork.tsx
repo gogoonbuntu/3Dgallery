@@ -294,7 +294,9 @@ export function ArtworkCollection() {
 
     return (
         <group>
-            {artworks.map((artwork) => (
+            {artworks
+                .filter((a) => a.imageUrl && a.imageUrl.startsWith('http'))
+                .map((artwork) => (
                 <ArtworkErrorBoundary key={artwork.id} artworkId={artwork.id}>
                     <Suspense fallback={null}>
                         <ArtworkItem artwork={artwork} />
