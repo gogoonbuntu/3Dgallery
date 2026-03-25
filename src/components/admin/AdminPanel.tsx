@@ -1,7 +1,7 @@
 import { useState, useRef } from 'react';
 import { useGalleryStore } from '../../store/galleryStore';
 import type { Artwork } from '../../store/galleryStore';
-import { WALL_COLORS, WALL_PATTERNS, FLOOR_TEXTURES, FRAME_STYLES } from '../../constants/galleryOptions';
+import { WALL_COLORS, WALL_PATTERNS, FLOOR_TEXTURES, FRAME_STYLES, PARTY_THEMES } from '../../constants/galleryOptions';
 import { uploadArtworkImage } from '../../lib/imageUpload';
 import './AdminPanel.css';
 
@@ -238,6 +238,21 @@ export function AdminPanel() {
                                             onClick={() => updateGallerySettings({ frameStyle: frame.value as any })}
                                         >
                                             {frame.label}
+                                        </button>
+                                    ))}
+                                </div>
+                            </section>
+
+                            <section className="setting-section">
+                                <h3>🎉 파티 테마</h3>
+                                <div className="option-buttons">
+                                    {PARTY_THEMES.map((theme) => (
+                                        <button
+                                            key={theme.value}
+                                            className={`option-btn ${gallerySettings.partyTheme === theme.value ? 'active' : ''}`}
+                                            onClick={() => updateGallerySettings({ partyTheme: theme.value as any })}
+                                        >
+                                            {theme.label}
                                         </button>
                                     ))}
                                 </div>

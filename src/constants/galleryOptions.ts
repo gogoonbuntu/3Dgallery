@@ -61,3 +61,9 @@ export const LIGHTING_PRESETS = [
         settings: { lightingBrightness: 60, lightingIntensity: 80, lightingColorTemp: 35, ambientIntensity: 20 }
     },
 ];
+
+export const PARTY_THEMES = [
+    { value: 'none', label: '❌ 없음' },
+    { value: 'elegant', label: '🥂 고급 파티' },
+    { value: 'fun', label: '🎈 신나는 파티' },
+];

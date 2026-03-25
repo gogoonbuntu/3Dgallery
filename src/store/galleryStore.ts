@@ -46,6 +46,7 @@ export interface GallerySettings {
   lightingIntensity: number;   // 0-100, light intensity/strength
   lightingColorTemp: number;   // 0-100, 0=cool(blue), 50=neutral, 100=warm(orange)
   ambientIntensity: number;    // 0-100, ambient light level
+  partyTheme: 'none' | 'elegant' | 'fun';
 }
 
 export type PlayerDesign = 'speaker' | 'lp';
@@ -248,6 +249,7 @@ const defaultSettings: GallerySettings = {
   lightingIntensity: 60,
   lightingColorTemp: 55,  // Slightly warm
   ambientIntensity: 40,
+  partyTheme: 'none',
 };
 
 const defaultMusicSettings: MusicSettings = {
