@@ -352,6 +352,144 @@ export function GalleryRoom() {
                 </mesh>
             </group>
 
+            {/* ═══ Chandelier (center ceiling) ═══ */}
+            <group position={[0, roomSize.height - 0.1, 0]}>
+                {/* Ceiling mount plate */}
+                <mesh position={[0, 0, 0]}>
+                    <cylinderGeometry args={[0.15, 0.2, 0.08, 16]} />
+                    <meshStandardMaterial color="#B8860B" metalness={0.9} roughness={0.15} />
+                </mesh>
+                {/* Central stem */}
+                <mesh position={[0, -0.35, 0]}>
+                    <cylinderGeometry args={[0.03, 0.04, 0.6, 8]} />
+                    <meshStandardMaterial color="#D4AF37" metalness={0.85} roughness={0.2} />
+                </mesh>
+                {/* Center ornament / hub */}
+                <mesh position={[0, -0.65, 0]}>
+                    <sphereGeometry args={[0.1, 12, 12]} />
+                    <meshStandardMaterial color="#D4AF37" metalness={0.9} roughness={0.15} />
+                </mesh>
+                {/* 6 chandelier arms with bulbs */}
+                {[0, 1, 2, 3, 4, 5].map((i) => {
+                    const angle = (i / 6) * Math.PI * 2;
+                    const armLen = 0.6;
+                    const cx = Math.cos(angle) * armLen;
+                    const cz = Math.sin(angle) * armLen;
+                    return (
+                        <group key={`arm-${i}`}>
+                            {/* Arm rod */}
+                            <mesh position={[cx * 0.5, -0.7, cz * 0.5]} rotation={[0, 0, Math.sin(angle) * 0.3]}>
+                                <cylinderGeometry args={[0.015, 0.015, armLen, 6]} />
+                                <meshStandardMaterial color="#B8860B" metalness={0.85} roughness={0.2} />
+                            </mesh>
+                            {/* Bulb holder */}
+                            <mesh position={[cx, -0.75, cz]}>
+                                <cylinderGeometry args={[0.03, 0.05, 0.06, 8]} />
+                                <meshStandardMaterial color="#8B6914" metalness={0.8} roughness={0.25} />
+                            </mesh>
+                            {/* Crystal bulb (emissive warm glow) */}
+                            <mesh position={[cx, -0.85, cz]}>
+                                <sphereGeometry args={[0.04, 8, 8]} />
+                                <meshStandardMaterial
+                                    color="#FFF8E7"
+                                    emissive="#FFD700"
+                                    emissiveIntensity={0.8}
+                                    transparent
+                                    opacity={0.9}
+                                />
+                            </mesh>
+                            {/* Chandelier bulb warm light */}
+                            <pointLight
+                                position={[cx, -0.9, cz]}
+                                intensity={8}
+                                color="#FFE4B5"
+                                distance={5}
+                            />
+                        </group>
+                    );
+                })}
+                {/* Bottom crystal drop */}
+                <mesh position={[0, -0.95, 0]}>
+                    <coneGeometry args={[0.04, 0.12, 6]} />
+                    <meshStandardMaterial color="#E8C54A" metalness={0.9} roughness={0.1} transparent opacity={0.8} />
+                </mesh>
+            </group>
+
+            {/* ═══ Decorative Plant Pots ═══ */}
+            {/* Plant 1 — Front-left corner */}
+            <group position={[-6.5, 0, -6.5]}>
+                {/* Pot */}
+                <mesh position={[0, 0.35, 0]}>
+                    <cylinderGeometry args={[0.22, 0.18, 0.7, 12]} />
+                    <meshStandardMaterial color="#2a2a2a" roughness={0.6} metalness={0.15} />
+                </mesh>
+                {/* Pot rim */}
+                <mesh position={[0, 0.7, 0]}>
+                    <cylinderGeometry args={[0.25, 0.22, 0.04, 12]} />
+                    <meshStandardMaterial color="#333" roughness={0.5} metalness={0.2} />
+                </mesh>
+                {/* Soil */}
+                <mesh position={[0, 0.68, 0]}>
+                    <cylinderGeometry args={[0.2, 0.2, 0.04, 12]} />
+                    <meshStandardMaterial color="#3d2817" roughness={0.95} />
+                </mesh>
+                {/* Main trunk */}
+                <mesh position={[0, 1.2, 0]}>
+                    <cylinderGeometry args={[0.03, 0.04, 0.9, 6]} />
+                    <meshStandardMaterial color="#4a3728" roughness={0.85} />
+                </mesh>
+                {/* Foliage clusters */}
+                <mesh position={[0, 1.7, 0]}>
+                    <sphereGeometry args={[0.3, 8, 8]} />
+                    <meshStandardMaterial color="#2d5a27" roughness={0.8} />
+                </mesh>
+                <mesh position={[0.15, 1.55, 0.1]}>
+                    <sphereGeometry args={[0.2, 8, 8]} />
+                    <meshStandardMaterial color="#3a6b33" roughness={0.8} />
+                </mesh>
+                <mesh position={[-0.1, 1.6, -0.12]}>
+                    <sphereGeometry args={[0.22, 8, 8]} />
+                    <meshStandardMaterial color="#2a5023" roughness={0.8} />
+                </mesh>
+            </group>
+
+            {/* Plant 2 — Right-back corner (slightly different style) */}
+            <group position={[6.5, 0, 6.5]}>
+                {/* Tall ceramic pot */}
+                <mesh position={[0, 0.45, 0]}>
+                    <cylinderGeometry args={[0.2, 0.25, 0.9, 12]} />
+                    <meshStandardMaterial color="#1a1a2e" roughness={0.5} metalness={0.1} />
+                </mesh>
+                {/* Gold rim accent */}
+                <mesh position={[0, 0.9, 0]}>
+                    <cylinderGeometry args={[0.22, 0.2, 0.03, 12]} />
+                    <meshStandardMaterial color="#B8860B" metalness={0.8} roughness={0.2} />
+                </mesh>
+                {/* Soil */}
+                <mesh position={[0, 0.87, 0]}>
+                    <cylinderGeometry args={[0.18, 0.18, 0.04, 12]} />
+                    <meshStandardMaterial color="#3d2817" roughness={0.95} />
+                </mesh>
+                {/* Slender trunk */}
+                <mesh position={[0.02, 1.35, 0]}>
+                    <cylinderGeometry args={[0.02, 0.035, 0.85, 6]} />
+                    <meshStandardMaterial color="#5a4030" roughness={0.85} />
+                </mesh>
+                {/* Drooping leaf clusters (fern-like) */}
+                <mesh position={[0, 1.8, 0]}>
+                    <sphereGeometry args={[0.25, 8, 8]} />
+                    <meshStandardMaterial color="#365e30" roughness={0.75} />
+                </mesh>
+                <mesh position={[0.18, 1.65, 0.05]}>
+                    <sphereGeometry args={[0.18, 8, 6]} />
+                    <meshStandardMaterial color="#2f5228" roughness={0.8} />
+                </mesh>
+                <mesh position={[-0.12, 1.7, -0.1]}>
+                    <sphereGeometry args={[0.2, 8, 6]} />
+                    <meshStandardMaterial color="#3a6b33" roughness={0.8} />
+                </mesh>
+            </group>
+
             {/* ═══ Lighting ═══ */}
             {(() => {
                 const brightness = gallerySettings.lightingBrightness / 100;
@@ -371,9 +509,11 @@ export function GalleryRoom() {
 
                 const mainLightColor = getLightColor(colorTemp);
                 const spotColor = getLightColor(Math.min(1, colorTemp + 0.05));
+                const wallWashColor = getLightColor(Math.min(1, colorTemp + 0.08));
                 const mainIntensity = 60 * brightness * intensity * 2;
                 const spotIntensity = 50 * brightness * intensity * 2;
-                const ambientIntensity = 0.3 * ambientLevel;
+                const wallWashIntensity = 25 * brightness * intensity * 2;
+                const ambientIntensity = 0.35 * ambientLevel;
 
                 return (
                     <>
@@ -400,7 +540,20 @@ export function GalleryRoom() {
                         <spotLight position={[-3, 4.8, 4]} target-position={[-3, 1.6, 8]} angle={0.4} penumbra={0.7} intensity={spotIntensity} color={spotColor} distance={12} />
                         <spotLight position={[3, 4.8, 4]} target-position={[3, 1.6, 8]} angle={0.4} penumbra={0.7} intensity={spotIntensity} color={spotColor} distance={12} />
 
-                        {/* Low ambient — darker for dramatic museum feel */}
+                        {/* ═══ Wall-wash lights — softer, wider illumination near walls ═══ */}
+                        {/* Front wall wash */}
+                        <pointLight position={[-4.5, 2.5, -5.5]} intensity={wallWashIntensity} color={wallWashColor} distance={8} />
+                        <pointLight position={[0, 2.5, -5.5]} intensity={wallWashIntensity} color={wallWashColor} distance={8} />
+                        <pointLight position={[4.5, 2.5, -5.5]} intensity={wallWashIntensity} color={wallWashColor} distance={8} />
+                        {/* Right wall wash */}
+                        <pointLight position={[5.5, 2.5, -4]} intensity={wallWashIntensity} color={wallWashColor} distance={8} />
+                        <pointLight position={[5.5, 2.5, 0]} intensity={wallWashIntensity} color={wallWashColor} distance={8} />
+                        <pointLight position={[5.5, 2.5, 4]} intensity={wallWashIntensity} color={wallWashColor} distance={8} />
+                        {/* Back wall wash */}
+                        <pointLight position={[-3, 2.5, 5.5]} intensity={wallWashIntensity} color={wallWashColor} distance={8} />
+                        <pointLight position={[3, 2.5, 5.5]} intensity={wallWashIntensity} color={wallWashColor} distance={8} />
+
+                        {/* Slightly higher ambient for better overall visibility */}
                         <ambientLight intensity={ambientIntensity} />
                     </>
                 );
