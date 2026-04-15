@@ -4,120 +4,208 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(0, 0, 0, 0.85);
+    background: rgba(5, 5, 12, 0.92);
     display: flex;
     align-items: center;
     justify-content: center;
     z-index: 1000;
     padding: 24px;
     cursor: pointer;
-    animation: fadeIn 0.5s ease-out;
+    animation: guideOverlayIn 0.6s ease-out;
 }
 
-@keyframes fadeIn {
-    from {
-        opacity: 0;
-    }
-
-    to {
-        opacity: 1;
-    }
+@keyframes guideOverlayIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
 }
 
 .touch-guide-content {
-    background: linear-gradient(180deg, rgba(40, 40, 50, 0.95), rgba(30, 30, 40, 0.95));
-    backdrop-filter: blur(20px);
+    background: linear-gradient(180deg, rgba(22, 20, 35, 0.97), rgba(15, 13, 25, 0.97));
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
     border-radius: 28px;
     padding: 36px 28px;
-    max-width: 360px;
+    max-width: 380px;
     width: 100%;
     text-align: center;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
-    animation: slideUp 0.5s ease-out 0.2s both;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    box-shadow:
+        0 24px 80px rgba(0, 0, 0, 0.6),
+        0 0 0 1px rgba(255, 255, 255, 0.03) inset,
+        0 0 120px rgba(102, 126, 234, 0.04);
+    animation: guideContentIn 0.6s ease-out 0.15s both;
 }
 
-@keyframes slideUp {
+@keyframes guideContentIn {
     from {
         opacity: 0;
-        transform: translateY(30px);
+        transform: translateY(24px) scale(0.97);
     }
-
     to {
         opacity: 1;
-        transform: translateY(0);
+        transform: translateY(0) scale(1);
     }
 }
 
-.touch-guide-content h2 {
-    margin: 0 0 28px;
-    font-size: 1.3rem;
-    font-weight: 700;
-    color: #ffffff;
-    line-height: 1.4;
+/* Exhibition branding area */
+.guide-exhibition-brand {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    margin-bottom: 4px;
 }
 
+.guide-brand-ko {
+    font-family: 'Noto Serif KR', serif;
+    font-size: 1.6rem;
+    font-weight: 600;
+    color: #ffffff;
+    letter-spacing: 6px;
+}
+
+.guide-brand-en {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 0.7rem;
+    color: rgba(255, 255, 255, 0.35);
+    letter-spacing: 3px;
+    text-transform: uppercase;
+}
+
+/* Divider */
+.guide-divider {
+    width: 40px;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.15), transparent);
+    margin: 16px auto;
+}
+
+/* Title */
+.touch-guide-content h2 {
+    font-family: 'Noto Serif KR', serif;
+    margin: 0 0 6px;
+    font-size: 1.35rem;
+    font-weight: 600;
+    color: #ffffff;
+    line-height: 1.4;
+    letter-spacing: 1px;
+}
+
+.guide-exhibition-sub {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 0.9rem;
+    color: rgba(255, 255, 255, 0.4);
+    margin: 0 0 6px;
+    font-style: italic;
+    letter-spacing: 0.5px;
+}
+
+.guide-exhibition-artists {
+    font-size: 0.78rem;
+    color: rgba(255, 255, 255, 0.3);
+    margin: 0;
+    letter-spacing: 0.5px;
+}
+
+/* Guide items */
 .guide-items {
     display: flex;
     flex-direction: column;
-    gap: 16px;
-    margin-bottom: 28px;
+    gap: 10px;
+    margin-bottom: 18px;
 }
 
 .guide-item {
     display: flex;
     align-items: center;
-    gap: 16px;
-    background: rgba(255, 255, 255, 0.05);
-    padding: 14px 16px;
-    border-radius: 14px;
+    gap: 14px;
+    background: rgba(255, 255, 255, 0.03);
+    padding: 11px 14px;
+    border-radius: 12px;
     text-align: left;
-    border: 1px solid rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.04);
+    transition: background 0.2s ease;
+}
+
+.guide-item:hover {
+    background: rgba(255, 255, 255, 0.06);
 }
 
 .guide-icon {
-    font-size: 1.8rem;
-    width: 48px;
-    height: 48px;
+    font-size: 1.5rem;
+    width: 42px;
+    height: 42px;
     display: flex;
     align-items: center;
     justify-content: center;
-    background: linear-gradient(135deg, #667eea, #764ba2);
-    border-radius: 12px;
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.15), rgba(118, 75, 162, 0.15));
+    border-radius: 10px;
+    flex-shrink: 0;
 }
 
 .guide-text {
     display: flex;
     flex-direction: column;
-    gap: 2px;
+    gap: 1px;
 }
 
 .guide-text strong {
-    color: #ffffff;
-    font-size: 0.95rem;
+    color: rgba(255, 255, 255, 0.85);
+    font-size: 0.85rem;
     font-weight: 600;
 }
 
 .guide-text span {
-    color: rgba(255, 255, 255, 0.6);
-    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.4);
+    font-size: 0.78rem;
 }
 
+/* Artwork count badge */
+.guide-artwork-count {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 10px 0;
+    margin-bottom: 8px;
+    font-size: 0.8rem;
+    color: rgba(255, 255, 255, 0.45);
+    letter-spacing: 0.5px;
+}
+
+/* Start hint */
 .start-hint {
     margin: 0;
-    color: rgba(255, 255, 255, 0.5);
-    font-size: 0.9rem;
-    animation: pulse 2s ease-in-out infinite;
+    color: rgba(255, 255, 255, 0.4);
+    font-size: 0.85rem;
+    font-weight: 500;
+    letter-spacing: 1px;
+    animation: hintPulse 2.5s ease-in-out infinite;
 }
 
-@keyframes pulse {
+@keyframes hintPulse {
+    0%, 100% { opacity: 0.4; }
+    50% { opacity: 0.9; }
+}
 
-    0%,
-    100% {
-        opacity: 0.5;
+/* Mobile adjustments */
+@media (max-width: 600px) {
+    .touch-guide-content {
+        padding: 28px 22px;
+        border-radius: 24px;
     }
 
-    50% {
-        opacity: 1;
+    .guide-brand-ko {
+        font-size: 1.4rem;
+    }
+
+    .touch-guide-content h2 {
+        font-size: 1.15rem;
+    }
+
+    .guide-icon {
+        width: 38px;
+        height: 38px;
+        font-size: 1.3rem;
     }
 }

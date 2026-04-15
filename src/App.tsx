@@ -11,6 +11,7 @@ import { MusicPlayer } from './components/ui/MusicPlayer';
 import { PlayerCount } from './components/ui/PlayerCount';
 import { QRCodeShare } from './components/ui/QRCodeShare';
 import { BrandWatermark } from './components/ui/BrandWatermark';
+import { ExhibitionHeader } from './components/ui/ExhibitionHeader';
 import { AdminAuth } from './components/admin/AdminAuth';
 import { AdminPanel } from './components/admin/AdminPanel';
 import { SuperAdminPanel } from './components/admin/SuperAdminPanel';
@@ -23,8 +24,23 @@ import './App.css';
 function LoadingScreen() {
   return (
     <div className="loading-screen">
-      <div className="loading-spinner"></div>
-      <p>갤러리 로딩 중...</p>
+      <div className="loading-brand">
+        <div className="loading-logo">
+          <span className="loading-logo-ko">온전</span>
+          <span className="loading-logo-en">Onliex</span>
+        </div>
+      </div>
+      <div className="loading-exhibition-info">
+        <h2 className="loading-exhibition-title">빛과 그림자의 경계</h2>
+        <p className="loading-exhibition-subtitle">Where Light Meets Shadow</p>
+      </div>
+      <div className="loading-progress-area">
+        <div className="loading-spinner"></div>
+        <p className="loading-status">갤러리 준비 중...</p>
+      </div>
+      <div className="loading-footer">
+        <span>온전하게 전달되는 예술</span>
+      </div>
     </div>
   );
 }
@@ -300,6 +316,7 @@ function ExhibitionPage() {
 
       {/* UI Overlays */}
       <TouchGuide />
+      <ExhibitionHeader />
       <PlayerCount />
       {!isCloseUpMode && <ArtworkInfoPanel />}
       {!isCloseUpMode && <GuestbookForm />}

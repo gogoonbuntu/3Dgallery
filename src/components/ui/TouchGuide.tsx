@@ -11,10 +11,21 @@ export function TouchGuide() {
     return (
         <div className="touch-guide-overlay" onClick={dismissTouchGuide}>
             <div className="touch-guide-content">
-                <h2>🎨 3D 갤러리에 오신 것을 환영합니다</h2>
+                {/* Exhibition branding */}
+                <div className="guide-exhibition-brand">
+                    <span className="guide-brand-ko">온전</span>
+                    <span className="guide-brand-en">Onliex Gallery</span>
+                </div>
+
+                <div className="guide-divider"></div>
+
+                <h2>빛과 그림자의 경계</h2>
+                <p className="guide-exhibition-sub">Where Light Meets Shadow</p>
+                <p className="guide-exhibition-artists">김서윤 · 이한결 · 박지안 · 최예린</p>
+
+                <div className="guide-divider"></div>
 
                 {isMobile ? (
-                    // Mobile Controls Guide
                     <div className="guide-items">
                         <div className="guide-item">
                             <div className="guide-icon">👆</div>
@@ -23,7 +34,6 @@ export function TouchGuide() {
                                 <span>시점 회전</span>
                             </div>
                         </div>
-
                         <div className="guide-item">
                             <div className="guide-icon">✌️</div>
                             <div className="guide-text">
@@ -31,15 +41,13 @@ export function TouchGuide() {
                                 <span>공간 이동</span>
                             </div>
                         </div>
-
                         <div className="guide-item">
                             <div className="guide-icon">🤏</div>
                             <div className="guide-text">
-                                <strong>핀치 인/아웃</strong>
+                                <strong>핀치 줌</strong>
                                 <span>줌 인/아웃</span>
                             </div>
                         </div>
-
                         <div className="guide-item">
                             <div className="guide-icon">👆👆</div>
                             <div className="guide-text">
@@ -49,7 +57,6 @@ export function TouchGuide() {
                         </div>
                     </div>
                 ) : (
-                    // Desktop Controls Guide
                     <div className="guide-items">
                         <div className="guide-item">
                             <div className="guide-icon">🖱️</div>
@@ -58,7 +65,6 @@ export function TouchGuide() {
                                 <span>시점 회전</span>
                             </div>
                         </div>
-
                         <div className="guide-item">
                             <div className="guide-icon">⌨️</div>
                             <div className="guide-text">
@@ -66,7 +72,6 @@ export function TouchGuide() {
                                 <span>공간 이동</span>
                             </div>
                         </div>
-
                         <div className="guide-item">
                             <div className="guide-icon">🖲️</div>
                             <div className="guide-text">
@@ -74,19 +79,23 @@ export function TouchGuide() {
                                 <span>앞/뒤 이동</span>
                             </div>
                         </div>
-
                         <div className="guide-item">
                             <div className="guide-icon">🖱️</div>
                             <div className="guide-text">
-                                <strong>작품 클릭/더블클릭</strong>
+                                <strong>작품 클릭 / 더블클릭</strong>
                                 <span>정보 보기 / 자세히 보기</span>
                             </div>
                         </div>
                     </div>
                 )}
 
+                <div className="guide-artwork-count">
+                    <span>🖼️</span>
+                    <span>8점의 작품이 전시되어 있습니다</span>
+                </div>
+
                 <p className="start-hint">
-                    {isMobile ? '화면을 터치하여 시작' : '클릭하여 시작'}
+                    {isMobile ? '화면을 터치하여 입장' : '클릭하여 입장'}
                 </p>
             </div>
         </div>
