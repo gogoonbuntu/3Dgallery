@@ -352,141 +352,146 @@ export function GalleryRoom() {
                 </mesh>
             </group>
 
-            {/* ═══ Chandelier (center ceiling) ═══ */}
-            <group position={[0, roomSize.height - 0.1, 0]}>
-                {/* Ceiling mount plate */}
-                <mesh position={[0, 0, 0]}>
-                    <cylinderGeometry args={[0.15, 0.2, 0.08, 16]} />
-                    <meshStandardMaterial color="#B8860B" metalness={0.9} roughness={0.15} />
+            {/* ═══ Crystal Chandelier (multi-tier ring) ═══ */}
+            <group position={[0, roomSize.height, 0]}>
+                {/* Ceiling rose */}
+                <mesh position={[0, -0.04, 0]}>
+                    <torusGeometry args={[0.12, 0.03, 12, 24]} />
+                    <meshStandardMaterial color="#D4AF37" metalness={0.92} roughness={0.1} />
                 </mesh>
-                {/* Central stem */}
-                <mesh position={[0, -0.35, 0]}>
-                    <cylinderGeometry args={[0.03, 0.04, 0.6, 8]} />
-                    <meshStandardMaterial color="#D4AF37" metalness={0.85} roughness={0.2} />
+                <mesh position={[0, -0.04, 0]}>
+                    <cylinderGeometry args={[0.08, 0.12, 0.05, 16]} />
+                    <meshStandardMaterial color="#B8860B" metalness={0.9} roughness={0.12} />
                 </mesh>
-                {/* Center ornament / hub */}
-                <mesh position={[0, -0.65, 0]}>
-                    <sphereGeometry args={[0.1, 12, 12]} />
-                    <meshStandardMaterial color="#D4AF37" metalness={0.9} roughness={0.15} />
+                {/* Chain links */}
+                {[0.15, 0.28, 0.41].map((y, i) => (
+                    <mesh key={`chain-${i}`} position={[0, -y, 0]} rotation={[Math.PI / 2, 0, (i % 2) * Math.PI / 2]}>
+                        <torusGeometry args={[0.025, 0.006, 6, 12]} />
+                        <meshStandardMaterial color="#D4AF37" metalness={0.88} roughness={0.15} />
+                    </mesh>
+                ))}
+                {/* Crown hub */}
+                <mesh position={[0, -0.55, 0]}>
+                    <cylinderGeometry args={[0.06, 0.1, 0.1, 12]} />
+                    <meshStandardMaterial color="#B8860B" metalness={0.9} roughness={0.12} />
                 </mesh>
-                {/* 6 chandelier arms with bulbs */}
-                {[0, 1, 2, 3, 4, 5].map((i) => {
-                    const angle = (i / 6) * Math.PI * 2;
-                    const armLen = 0.6;
-                    const cx = Math.cos(angle) * armLen;
-                    const cz = Math.sin(angle) * armLen;
+                {/* Tier 1 ring (upper, smaller) */}
+                <mesh position={[0, -0.65, 0]} rotation={[Math.PI / 2, 0, 0]}>
+                    <torusGeometry args={[0.35, 0.015, 8, 32]} />
+                    <meshStandardMaterial color="#D4AF37" metalness={0.92} roughness={0.08} />
+                </mesh>
+                {/* Tier 1 crystals */}
+                {Array.from({ length: 8 }).map((_, i) => {
+                    const a = (i / 8) * Math.PI * 2;
                     return (
-                        <group key={`arm-${i}`}>
-                            {/* Arm rod */}
-                            <mesh position={[cx * 0.5, -0.7, cz * 0.5]} rotation={[0, 0, Math.sin(angle) * 0.3]}>
-                                <cylinderGeometry args={[0.015, 0.015, armLen, 6]} />
-                                <meshStandardMaterial color="#B8860B" metalness={0.85} roughness={0.2} />
+                        <mesh key={`t1-${i}`} position={[Math.cos(a) * 0.35, -0.72, Math.sin(a) * 0.35]}>
+                            <octahedronGeometry args={[0.02, 0]} />
+                            <meshStandardMaterial color="#FFFDE7" emissive="#FFD700" emissiveIntensity={0.5} transparent opacity={0.85} metalness={0.3} roughness={0.05} />
+                        </mesh>
+                    );
+                })}
+                {/* Connecting rods */}
+                {[0, 2, 4, 6].map((i) => {
+                    const a = (i / 8) * Math.PI * 2;
+                    return (
+                        <mesh key={`rod-${i}`} position={[Math.cos(a) * 0.475, -0.78, Math.sin(a) * 0.475]} rotation={[0, -a, Math.PI / 12]}>
+                            <cylinderGeometry args={[0.006, 0.006, 0.28, 4]} />
+                            <meshStandardMaterial color="#B8860B" metalness={0.88} roughness={0.15} />
+                        </mesh>
+                    );
+                })}
+                {/* Tier 2 ring (lower, larger) */}
+                <mesh position={[0, -0.85, 0]} rotation={[Math.PI / 2, 0, 0]}>
+                    <torusGeometry args={[0.6, 0.018, 8, 40]} />
+                    <meshStandardMaterial color="#D4AF37" metalness={0.92} roughness={0.08} />
+                </mesh>
+                {/* Tier 2 crystals + lights */}
+                {Array.from({ length: 12 }).map((_, i) => {
+                    const a = (i / 12) * Math.PI * 2;
+                    const cx = Math.cos(a) * 0.6;
+                    const cz = Math.sin(a) * 0.6;
+                    return (
+                        <group key={`t2-${i}`}>
+                            <mesh position={[cx, -0.92, cz]}>
+                                <octahedronGeometry args={[0.025, 0]} />
+                                <meshStandardMaterial color="#FFFDE7" emissive="#FFD54F" emissiveIntensity={0.6} transparent opacity={0.8} metalness={0.2} roughness={0.05} />
                             </mesh>
-                            {/* Bulb holder */}
-                            <mesh position={[cx, -0.75, cz]}>
-                                <cylinderGeometry args={[0.03, 0.05, 0.06, 8]} />
-                                <meshStandardMaterial color="#8B6914" metalness={0.8} roughness={0.25} />
-                            </mesh>
-                            {/* Crystal bulb (emissive warm glow) */}
-                            <mesh position={[cx, -0.85, cz]}>
-                                <sphereGeometry args={[0.04, 8, 8]} />
-                                <meshStandardMaterial
-                                    color="#FFF8E7"
-                                    emissive="#FFD700"
-                                    emissiveIntensity={0.8}
-                                    transparent
-                                    opacity={0.9}
-                                />
-                            </mesh>
-                            {/* Chandelier bulb warm light */}
-                            <pointLight
-                                position={[cx, -0.9, cz]}
-                                intensity={8}
-                                color="#FFE4B5"
-                                distance={5}
-                            />
+                            {i % 3 === 0 && (
+                                <pointLight position={[cx, -0.95, cz]} intensity={6} color="#FFE4B5" distance={4} />
+                            )}
                         </group>
                     );
                 })}
-                {/* Bottom crystal drop */}
+                {/* Central finial */}
                 <mesh position={[0, -0.95, 0]}>
-                    <coneGeometry args={[0.04, 0.12, 6]} />
-                    <meshStandardMaterial color="#E8C54A" metalness={0.9} roughness={0.1} transparent opacity={0.8} />
+                    <cylinderGeometry args={[0.015, 0.04, 0.08, 8]} />
+                    <meshStandardMaterial color="#D4AF37" metalness={0.92} roughness={0.1} />
+                </mesh>
+                <mesh position={[0, -1.02, 0]}>
+                    <octahedronGeometry args={[0.03, 0]} />
+                    <meshStandardMaterial color="#FFF8E1" emissive="#FFD700" emissiveIntensity={0.7} transparent opacity={0.85} metalness={0.3} roughness={0.05} />
                 </mesh>
             </group>
 
-            {/* ═══ Decorative Plant Pots ═══ */}
-            {/* Plant 1 — Front-left corner */}
-            <group position={[-6.5, 0, -6.5]}>
-                {/* Pot */}
-                <mesh position={[0, 0.35, 0]}>
-                    <cylinderGeometry args={[0.22, 0.18, 0.7, 12]} />
-                    <meshStandardMaterial color="#2a2a2a" roughness={0.6} metalness={0.15} />
+            {/* ═══ Marble Pedestals with Decorative Vases ═══ */}
+            {/* Pedestal 1 — Front-left */}
+            <group position={[-6.5, 0, -6]}>
+                <mesh position={[0, 0.05, 0]}>
+                    <boxGeometry args={[0.5, 0.1, 0.5]} />
+                    <meshStandardMaterial color="#d0ccc5" roughness={0.3} metalness={0.05} />
                 </mesh>
-                {/* Pot rim */}
-                <mesh position={[0, 0.7, 0]}>
-                    <cylinderGeometry args={[0.25, 0.22, 0.04, 12]} />
-                    <meshStandardMaterial color="#333" roughness={0.5} metalness={0.2} />
+                <mesh position={[0, 0.55, 0]}>
+                    <cylinderGeometry args={[0.14, 0.18, 0.9, 16]} />
+                    <meshStandardMaterial color="#e0dcd5" roughness={0.25} metalness={0.05} />
                 </mesh>
-                {/* Soil */}
-                <mesh position={[0, 0.68, 0]}>
-                    <cylinderGeometry args={[0.2, 0.2, 0.04, 12]} />
-                    <meshStandardMaterial color="#3d2817" roughness={0.95} />
+                <mesh position={[0, 1.05, 0]}>
+                    <boxGeometry args={[0.44, 0.06, 0.44]} />
+                    <meshStandardMaterial color="#d5d0c8" roughness={0.3} metalness={0.05} />
                 </mesh>
-                {/* Main trunk */}
-                <mesh position={[0, 1.2, 0]}>
-                    <cylinderGeometry args={[0.03, 0.04, 0.9, 6]} />
-                    <meshStandardMaterial color="#4a3728" roughness={0.85} />
+                {/* Gold vase */}
+                <mesh position={[0, 1.3, 0]}>
+                    <cylinderGeometry args={[0.06, 0.1, 0.12, 12]} />
+                    <meshStandardMaterial color="#8B6914" metalness={0.85} roughness={0.15} />
                 </mesh>
-                {/* Foliage clusters */}
-                <mesh position={[0, 1.7, 0]}>
-                    <sphereGeometry args={[0.3, 8, 8]} />
-                    <meshStandardMaterial color="#2d5a27" roughness={0.8} />
+                <mesh position={[0, 1.42, 0]}>
+                    <sphereGeometry args={[0.1, 12, 10, 0, Math.PI * 2, 0, Math.PI * 0.65]} />
+                    <meshStandardMaterial color="#B8860B" metalness={0.88} roughness={0.12} />
                 </mesh>
-                <mesh position={[0.15, 1.55, 0.1]}>
-                    <sphereGeometry args={[0.2, 8, 8]} />
-                    <meshStandardMaterial color="#3a6b33" roughness={0.8} />
-                </mesh>
-                <mesh position={[-0.1, 1.6, -0.12]}>
-                    <sphereGeometry args={[0.22, 8, 8]} />
-                    <meshStandardMaterial color="#2a5023" roughness={0.8} />
+                <mesh position={[0, 1.46, 0]}>
+                    <torusGeometry args={[0.1, 0.012, 8, 16]} />
+                    <meshStandardMaterial color="#D4AF37" metalness={0.92} roughness={0.1} />
                 </mesh>
             </group>
-
-            {/* Plant 2 — Right-back corner (slightly different style) */}
-            <group position={[6.5, 0, 6.5]}>
-                {/* Tall ceramic pot */}
-                <mesh position={[0, 0.45, 0]}>
-                    <cylinderGeometry args={[0.2, 0.25, 0.9, 12]} />
-                    <meshStandardMaterial color="#1a1a2e" roughness={0.5} metalness={0.1} />
+            {/* Pedestal 2 — Right-back */}
+            <group position={[6.5, 0, 6]}>
+                <mesh position={[0, 0.05, 0]}>
+                    <boxGeometry args={[0.5, 0.1, 0.5]} />
+                    <meshStandardMaterial color="#d0ccc5" roughness={0.3} metalness={0.05} />
                 </mesh>
-                {/* Gold rim accent */}
-                <mesh position={[0, 0.9, 0]}>
-                    <cylinderGeometry args={[0.22, 0.2, 0.03, 12]} />
-                    <meshStandardMaterial color="#B8860B" metalness={0.8} roughness={0.2} />
+                <mesh position={[0, 0.55, 0]}>
+                    <cylinderGeometry args={[0.14, 0.18, 0.9, 16]} />
+                    <meshStandardMaterial color="#e0dcd5" roughness={0.25} metalness={0.05} />
                 </mesh>
-                {/* Soil */}
-                <mesh position={[0, 0.87, 0]}>
-                    <cylinderGeometry args={[0.18, 0.18, 0.04, 12]} />
-                    <meshStandardMaterial color="#3d2817" roughness={0.95} />
+                <mesh position={[0, 1.05, 0]}>
+                    <boxGeometry args={[0.44, 0.06, 0.44]} />
+                    <meshStandardMaterial color="#d5d0c8" roughness={0.3} metalness={0.05} />
                 </mesh>
-                {/* Slender trunk */}
-                <mesh position={[0.02, 1.35, 0]}>
-                    <cylinderGeometry args={[0.02, 0.035, 0.85, 6]} />
-                    <meshStandardMaterial color="#5a4030" roughness={0.85} />
+                {/* Dark urn with gold bands */}
+                <mesh position={[0, 1.28, 0]}>
+                    <cylinderGeometry args={[0.05, 0.09, 0.1, 12]} />
+                    <meshStandardMaterial color="#1a1a2e" roughness={0.4} metalness={0.1} />
                 </mesh>
-                {/* Drooping leaf clusters (fern-like) */}
-                <mesh position={[0, 1.8, 0]}>
-                    <sphereGeometry args={[0.25, 8, 8]} />
-                    <meshStandardMaterial color="#365e30" roughness={0.75} />
+                <mesh position={[0, 1.4, 0]}>
+                    <sphereGeometry args={[0.09, 12, 10, 0, Math.PI * 2, 0, Math.PI * 0.6]} />
+                    <meshStandardMaterial color="#1a1a2e" roughness={0.35} metalness={0.1} />
                 </mesh>
-                <mesh position={[0.18, 1.65, 0.05]}>
-                    <sphereGeometry args={[0.18, 8, 6]} />
-                    <meshStandardMaterial color="#2f5228" roughness={0.8} />
+                <mesh position={[0, 1.34, 0]}>
+                    <torusGeometry args={[0.075, 0.008, 8, 16]} />
+                    <meshStandardMaterial color="#D4AF37" metalness={0.92} roughness={0.1} />
                 </mesh>
-                <mesh position={[-0.12, 1.7, -0.1]}>
-                    <sphereGeometry args={[0.2, 8, 6]} />
-                    <meshStandardMaterial color="#3a6b33" roughness={0.8} />
+                <mesh position={[0, 1.44, 0]}>
+                    <torusGeometry args={[0.09, 0.008, 8, 16]} />
+                    <meshStandardMaterial color="#D4AF37" metalness={0.92} roughness={0.1} />
                 </mesh>
             </group>
 
