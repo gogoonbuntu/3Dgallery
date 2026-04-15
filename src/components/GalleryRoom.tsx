@@ -101,30 +101,64 @@ export function GalleryRoom() {
                 drawWoodPlanks('herringbone');
                 break;
             case 'marble':
-            case 'stone':
+            case 'stone': {
                 const isStone = gallerySettings.floorTexture === 'stone';
-                ctx.fillStyle = isStone ? '#444' : '#e8e8e8';
+                // Rich museum-quality marble/stone
+                const baseR = isStone ? 68 : 210;
+                const baseG = isStone ? 68 : 205;
+                const baseB = isStone ? 68 : 195;
+                ctx.fillStyle = `rgb(${baseR}, ${baseG}, ${baseB})`;
                 ctx.fillRect(0, 0, TEXTURE_SIZE, TEXTURE_SIZE);
-                ctx.strokeStyle = isStone ? '#555' : '#d0d0d0';
-                ctx.lineWidth = 1;
-                // Reduced veins
-                for (let i = 0; i < 10; i++) {
+
+                // Subtle color variation patches
+                for (let i = 0; i < 30; i++) {
+                    const patchR = baseR + (Math.random() - 0.5) * 20;
+                    const patchG = baseG + (Math.random() - 0.5) * 20;
+                    const patchB = baseB + (Math.random() - 0.5) * 15;
+                    ctx.fillStyle = `rgba(${patchR}, ${patchG}, ${patchB}, 0.3)`;
                     ctx.beginPath();
-                    ctx.moveTo(Math.random() * TEXTURE_SIZE, Math.random() * TEXTURE_SIZE);
-                    ctx.bezierCurveTo(
+                    ctx.ellipse(
                         Math.random() * TEXTURE_SIZE, Math.random() * TEXTURE_SIZE,
-                        Math.random() * TEXTURE_SIZE, Math.random() * TEXTURE_SIZE,
-                        Math.random() * TEXTURE_SIZE, Math.random() * TEXTURE_SIZE
+                        20 + Math.random() * 40, 15 + Math.random() * 30,
+                        Math.random() * Math.PI, 0, Math.PI * 2
                     );
+                    ctx.fill();
+                }
+
+                // Marble veins — organic, flowing lines
+                for (let i = 0; i < 15; i++) {
+                    const veinAlpha = 0.08 + Math.random() * 0.12;
+                    const veinShade = isStone ? 85 : 170;
+                    ctx.strokeStyle = `rgba(${veinShade}, ${veinShade - 10}, ${veinShade - 5}, ${veinAlpha})`;
+                    ctx.lineWidth = 0.5 + Math.random() * 1.5;
+                    ctx.beginPath();
+                    const startX = Math.random() * TEXTURE_SIZE;
+                    const startY = Math.random() * TEXTURE_SIZE;
+                    ctx.moveTo(startX, startY);
+                    const segments = 3 + Math.floor(Math.random() * 4);
+                    for (let s = 0; s < segments; s++) {
+                        ctx.bezierCurveTo(
+                            startX + (Math.random() - 0.5) * TEXTURE_SIZE * 0.8,
+                            startY + (Math.random() - 0.5) * TEXTURE_SIZE * 0.8,
+                            Math.random() * TEXTURE_SIZE,
+                            Math.random() * TEXTURE_SIZE,
+                            Math.random() * TEXTURE_SIZE,
+                            Math.random() * TEXTURE_SIZE
+                        );
+                    }
                     ctx.stroke();
                 }
-                // Grid lines
-                ctx.strokeStyle = isStone ? '#333' : '#ccc';
-                for (let i = 0; i <= 4; i++) {
-                    ctx.beginPath(); ctx.moveTo(i * 64, 0); ctx.lineTo(i * 64, TEXTURE_SIZE); ctx.stroke();
-                    ctx.beginPath(); ctx.moveTo(0, i * 64); ctx.lineTo(TEXTURE_SIZE, i * 64); ctx.stroke();
+
+                // Tile grid lines — subtle grout
+                const tileSize = 64;
+                ctx.strokeStyle = isStone ? 'rgba(40,40,40,0.4)' : 'rgba(180,175,165,0.5)';
+                ctx.lineWidth = 1;
+                for (let i = 0; i <= TEXTURE_SIZE / tileSize; i++) {
+                    ctx.beginPath(); ctx.moveTo(i * tileSize, 0); ctx.lineTo(i * tileSize, TEXTURE_SIZE); ctx.stroke();
+                    ctx.beginPath(); ctx.moveTo(0, i * tileSize); ctx.lineTo(TEXTURE_SIZE, i * tileSize); ctx.stroke();
                 }
                 break;
+            }
             case 'concrete':
                 ctx.fillStyle = '#888';
                 ctx.fillRect(0, 0, TEXTURE_SIZE, TEXTURE_SIZE);
@@ -232,16 +266,20 @@ export function GalleryRoom() {
 
     return (
         <group>
-            {/* Floor */}
+            {/* Floor — glossy museum floor */}
             <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, 0]} receiveShadow>
                 <planeGeometry args={[roomSize.width, roomSize.depth]} />
-                <meshStandardMaterial map={floorTexture} />
+                <meshStandardMaterial
+                    map={floorTexture}
+                    roughness={0.25}
+                    metalness={0.05}
+                />
             </mesh>
 
-            {/* Ceiling */}
+            {/* Ceiling — dark museum ceiling */}
             <mesh rotation={[Math.PI / 2, 0, 0]} position={[0, roomSize.height, 0]}>
                 <planeGeometry args={[roomSize.width, roomSize.depth]} />
-                <meshStandardMaterial color="#fafafa" />
+                <meshStandardMaterial color="#1a1a1a" roughness={0.95} />
             </mesh>
 
             {/* Walls */}
@@ -250,62 +288,119 @@ export function GalleryRoom() {
             <Wall position={[0, roomSize.height / 2, roomSize.depth / 2]} rotation={[0, Math.PI, 0]} size={[roomSize.width, roomSize.height]} color={wallColor} texture={wallTexture} />
             <Wall position={[-roomSize.width / 2, roomSize.height / 2, 0]} rotation={[0, Math.PI / 2, 0]} size={[roomSize.depth, roomSize.height]} color={wallColor} texture={wallTexture} />
 
-            {/* Dynamic Lighting based on gallery settings */}
+            {/* ═══ Museum Architectural Details ═══ */}
+
+            {/* Baseboard molding — dark strip along wall-floor junction */}
+            {/* Front wall */}
+            <mesh position={[0, 0.08, -roomSize.depth / 2 + 0.01]}>
+                <boxGeometry args={[roomSize.width, 0.16, 0.04]} />
+                <meshStandardMaterial color="#0d0d15" roughness={0.7} />
+            </mesh>
+            {/* Back wall */}
+            <mesh position={[0, 0.08, roomSize.depth / 2 - 0.01]}>
+                <boxGeometry args={[roomSize.width, 0.16, 0.04]} />
+                <meshStandardMaterial color="#0d0d15" roughness={0.7} />
+            </mesh>
+            {/* Right wall */}
+            <mesh position={[roomSize.width / 2 - 0.01, 0.08, 0]} rotation={[0, Math.PI / 2, 0]}>
+                <boxGeometry args={[roomSize.depth, 0.16, 0.04]} />
+                <meshStandardMaterial color="#0d0d15" roughness={0.7} />
+            </mesh>
+            {/* Left wall */}
+            <mesh position={[-roomSize.width / 2 + 0.01, 0.08, 0]} rotation={[0, Math.PI / 2, 0]}>
+                <boxGeometry args={[roomSize.depth, 0.16, 0.04]} />
+                <meshStandardMaterial color="#0d0d15" roughness={0.7} />
+            </mesh>
+
+            {/* Crown molding — subtle strip at wall-ceiling junction */}
+            {/* Front wall crown */}
+            <mesh position={[0, roomSize.height - 0.06, -roomSize.depth / 2 + 0.015]}>
+                <boxGeometry args={[roomSize.width, 0.12, 0.03]} />
+                <meshStandardMaterial color="#222230" roughness={0.6} metalness={0.1} />
+            </mesh>
+            {/* Right wall crown */}
+            <mesh position={[roomSize.width / 2 - 0.015, roomSize.height - 0.06, 0]} rotation={[0, Math.PI / 2, 0]}>
+                <boxGeometry args={[roomSize.depth, 0.12, 0.03]} />
+                <meshStandardMaterial color="#222230" roughness={0.6} metalness={0.1} />
+            </mesh>
+            {/* Back wall crown */}
+            <mesh position={[0, roomSize.height - 0.06, roomSize.depth / 2 - 0.015]}>
+                <boxGeometry args={[roomSize.width, 0.12, 0.03]} />
+                <meshStandardMaterial color="#222230" roughness={0.6} metalness={0.1} />
+            </mesh>
+            {/* Left wall crown */}
+            <mesh position={[-roomSize.width / 2 + 0.015, roomSize.height - 0.06, 0]} rotation={[0, Math.PI / 2, 0]}>
+                <boxGeometry args={[roomSize.depth, 0.12, 0.03]} />
+                <meshStandardMaterial color="#222230" roughness={0.6} metalness={0.1} />
+            </mesh>
+
+            {/* ═══ Museum Bench (center) ═══ */}
+            <group position={[0, 0, 0]}>
+                {/* Bench seat */}
+                <mesh position={[0, 0.45, 0]}>
+                    <boxGeometry args={[2.4, 0.08, 0.7]} />
+                    <meshStandardMaterial color="#1a1a1a" roughness={0.85} />
+                </mesh>
+                {/* Bench legs */}
+                <mesh position={[-1.0, 0.22, 0]}>
+                    <boxGeometry args={[0.08, 0.44, 0.6]} />
+                    <meshStandardMaterial color="#111" roughness={0.9} />
+                </mesh>
+                <mesh position={[1.0, 0.22, 0]}>
+                    <boxGeometry args={[0.08, 0.44, 0.6]} />
+                    <meshStandardMaterial color="#111" roughness={0.9} />
+                </mesh>
+            </group>
+
+            {/* ═══ Lighting ═══ */}
             {(() => {
-                // Calculate lighting values from settings (0-100 scale to actual values)
                 const brightness = gallerySettings.lightingBrightness / 100;
                 const intensity = gallerySettings.lightingIntensity / 100;
                 const colorTemp = gallerySettings.lightingColorTemp / 100;
                 const ambientLevel = gallerySettings.ambientIntensity / 100;
 
-                // Color temperature: 0 = cool blue, 0.5 = neutral white, 1 = warm orange
                 const getLightColor = (temp: number) => {
                     if (temp < 0.5) {
-                        // Cool (blue tinted)
-                        const t = temp * 2; // 0-1
-                        const r = Math.round(200 + t * 55);
-                        const g = Math.round(220 + t * 35);
-                        const b = 255;
-                        return `rgb(${r}, ${g}, ${b})`;
+                        const t = temp * 2;
+                        return `rgb(${Math.round(200 + t * 55)}, ${Math.round(220 + t * 35)}, 255)`;
                     } else {
-                        // Warm (orange/yellow tinted)
-                        const t = (temp - 0.5) * 2; // 0-1
-                        const r = 255;
-                        const g = Math.round(255 - t * 30);
-                        const b = Math.round(255 - t * 80);
-                        return `rgb(${r}, ${g}, ${b})`;
+                        const t = (temp - 0.5) * 2;
+                        return `rgb(255, ${Math.round(255 - t * 30)}, ${Math.round(255 - t * 80)})`;
                     }
                 };
 
                 const mainLightColor = getLightColor(colorTemp);
-                const accentLightColor = getLightColor(Math.min(1, colorTemp + 0.1));
-
-                // Main ceiling light - intensity affected by brightness and intensity
-                const mainIntensity = 80 * brightness * intensity * 2;
-                const sideIntensity = 40 * brightness * intensity * 2;
-                const ambientIntensity = 0.6 * ambientLevel;
+                const spotColor = getLightColor(Math.min(1, colorTemp + 0.05));
+                const mainIntensity = 60 * brightness * intensity * 2;
+                const spotIntensity = 50 * brightness * intensity * 2;
+                const ambientIntensity = 0.3 * ambientLevel;
 
                 return (
                     <>
-                        {/* Main ceiling light */}
+                        {/* Main ceiling light (dimmer for drama) */}
                         <pointLight
                             position={[0, 4.5, 0]}
                             intensity={mainIntensity}
                             color={mainLightColor}
                             castShadow
                         />
-                        {/* Side accent lights */}
-                        <pointLight
-                            position={[-4, 4, 0]}
-                            intensity={sideIntensity}
-                            color={accentLightColor}
-                        />
-                        <pointLight
-                            position={[4, 4, 0]}
-                            intensity={sideIntensity}
-                            color={accentLightColor}
-                        />
-                        {/* Ambient fill light */}
+
+                        {/* ═══ Museum Spotlights — aimed at artwork walls ═══ */}
+                        {/* Wall A (front) — 3 spots */}
+                        <spotLight position={[-4.5, 4.8, -4]} target-position={[-4.5, 1.6, -8]} angle={0.4} penumbra={0.7} intensity={spotIntensity} color={spotColor} distance={12} />
+                        <spotLight position={[0, 4.8, -4]} target-position={[0, 1.6, -8]} angle={0.4} penumbra={0.7} intensity={spotIntensity} color={spotColor} distance={12} />
+                        <spotLight position={[4.5, 4.8, -4]} target-position={[4.5, 1.6, -8]} angle={0.4} penumbra={0.7} intensity={spotIntensity} color={spotColor} distance={12} />
+
+                        {/* Wall B (right) — 3 spots */}
+                        <spotLight position={[4, 4.8, -4]} target-position={[8, 1.6, -4]} angle={0.4} penumbra={0.7} intensity={spotIntensity} color={spotColor} distance={12} />
+                        <spotLight position={[4, 4.8, 0]} target-position={[8, 1.6, 0]} angle={0.4} penumbra={0.7} intensity={spotIntensity} color={spotColor} distance={12} />
+                        <spotLight position={[4, 4.8, 4]} target-position={[8, 1.6, 4]} angle={0.4} penumbra={0.7} intensity={spotIntensity} color={spotColor} distance={12} />
+
+                        {/* Wall C (back) — 2 spots */}
+                        <spotLight position={[-3, 4.8, 4]} target-position={[-3, 1.6, 8]} angle={0.4} penumbra={0.7} intensity={spotIntensity} color={spotColor} distance={12} />
+                        <spotLight position={[3, 4.8, 4]} target-position={[3, 1.6, 8]} angle={0.4} penumbra={0.7} intensity={spotIntensity} color={spotColor} distance={12} />
+
+                        {/* Low ambient — darker for dramatic museum feel */}
                         <ambientLight intensity={ambientIntensity} />
                     </>
                 );
