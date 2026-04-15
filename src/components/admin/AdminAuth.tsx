@@ -54,7 +54,15 @@ export function AdminAuth() {
 
     return (
         <>
-            <button className="admin-login-trigger" onClick={() => setShowLogin(true)}>
+            <button className="admin-login-trigger" onClick={() => {
+                // default 전시회는 비밀번호 없이 바로 관리자 모드
+                if (currentExhibitionCode === 'default') {
+                    setAdminMode(true);
+                    toggleAdminPanel();
+                    return;
+                }
+                setShowLogin(true);
+            }}>
                 🔐
             </button>
 
