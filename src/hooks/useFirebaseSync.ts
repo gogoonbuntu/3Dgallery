@@ -52,6 +52,12 @@ export function useFirebaseSync(enabled: boolean = true) {
 
         if (!currentExhibitionCode) return;
 
+        // Skip Firebase sync for 'default' exhibition — always use hardcoded sample data
+        if (currentExhibitionCode === 'default') {
+            debugLog('SKIP', 'Default exhibition uses sample data, skipping Firebase sync');
+            return;
+        }
+
         // If code changed, unsubscribe from previous
         if (currentCodeRef.current !== currentExhibitionCode) {
             unsubscribersRef.current.forEach(unsub => unsub());
@@ -185,7 +191,7 @@ export function useFirebaseSync(enabled: boolean = true) {
 
     // Sync local changes to Firebase (only when NOT receiving from Firebase)
     useEffect(() => {
-        if (!currentExhibitionCode || isReceivingFromFirebase) return;
+        if (!currentExhibitionCode || currentExhibitionCode === 'default' || isReceivingFromFirebase) return;
 
         // Skip initial render
         if (prevArtworks.current.length === 0 && artworks.length > 0) {
@@ -213,7 +219,7 @@ export function useFirebaseSync(enabled: boolean = true) {
 
     // Sync guest messages (only when NOT receiving from Firebase)
     useEffect(() => {
-        if (!currentExhibitionCode || isReceivingFromFirebase) return;
+        if (!currentExhibitionCode || currentExhibitionCode === 'default' || isReceivingFromFirebase) return;
 
         if (prevMessages.current.length === 0 && guestMessages.length > 0) {
             prevMessages.current = guestMessages;
@@ -243,7 +249,7 @@ export function useFirebaseSync(enabled: boolean = true) {
 
     // Sync settings (only when NOT receiving from Firebase, with debounce)
     useEffect(() => {
-        if (!currentExhibitionCode || isReceivingFromFirebase) return;
+        if (!currentExhibitionCode || currentExhibitionCode === 'default' || isReceivingFromFirebase) return;
 
         const currentSettings = { gallery: gallerySettings, music: musicSettings };
 

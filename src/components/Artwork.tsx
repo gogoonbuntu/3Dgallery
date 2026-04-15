@@ -171,19 +171,66 @@ const ArtworkItem = memo(function ArtworkItem({ artwork }: ArtworkProps) {
                         <meshStandardMaterial color={frameColor} />
                     </mesh>
                 );
-            case 'ornate': // Double-layered gold-ish
+            case 'ornate': { // Baroque museum frame — multi-layered gold
+                const goldD = '#8B6914';  // Dark antique gold
+                const goldM = '#B8860B';  // DarkGoldenrod
+                const goldB = '#D4AF37';  // Classic gold
+                const goldL = '#E8C54A';  // Light gold highlight
                 return (
-                    <group position={[0, 0, -0.08]}>
-                        <mesh>
-                            <boxGeometry args={[w + 0.4, h + 0.4, 0.06]} />
-                            <meshStandardMaterial color={frameColor} metalness={0.8} roughness={0.2} />
+                    <group position={[0, 0, -0.06]}>
+                        {/* Layer 1: Deep backing plate */}
+                        <mesh position={[0, 0, -0.04]}>
+                            <boxGeometry args={[w + 0.52, h + 0.52, 0.02]} />
+                            <meshStandardMaterial color="#0a0a0a" />
                         </mesh>
-                        <mesh position={[0, 0, 0.04]}>
-                            <boxGeometry args={[w + 0.2, h + 0.2, 0.03]} />
-                            <meshStandardMaterial color={frameColor} metalness={0.9} roughness={0.1} />
+                        {/* Layer 2: Outer frame rail */}
+                        <mesh position={[0, 0, -0.02]}>
+                            <boxGeometry args={[w + 0.5, h + 0.5, 0.06]} />
+                            <meshStandardMaterial color={goldD} metalness={0.8} roughness={0.3} />
+                        </mesh>
+                        {/* Layer 3: Middle ornate band */}
+                        <mesh>
+                            <boxGeometry args={[w + 0.4, h + 0.4, 0.08]} />
+                            <meshStandardMaterial color={goldM} metalness={0.85} roughness={0.2} />
+                        </mesh>
+                        {/* Layer 4: Inner frame step */}
+                        <mesh position={[0, 0, 0.03]}>
+                            <boxGeometry args={[w + 0.25, h + 0.25, 0.04]} />
+                            <meshStandardMaterial color={goldB} metalness={0.9} roughness={0.15} />
+                        </mesh>
+                        {/* Layer 5: Inner liner / mat (dark velvet) */}
+                        <mesh position={[0, 0, 0.05]}>
+                            <boxGeometry args={[w + 0.1, h + 0.1, 0.02]} />
+                            <meshStandardMaterial color="#1a0800" roughness={0.95} />
+                        </mesh>
+                        {/* Corner rosettes */}
+                        {[[-1,-1],[-1,1],[1,-1],[1,1]].map(([cx,cy], i) => (
+                            <mesh key={`corner-${i}`} position={[cx*(w/2+0.2), cy*(h/2+0.2), 0.02]}>
+                                <sphereGeometry args={[0.05, 10, 10]} />
+                                <meshStandardMaterial color={goldL} metalness={0.95} roughness={0.1} />
+                            </mesh>
+                        ))}
+                        {/* Edge beading — horizontal */}
+                        <mesh position={[0, h/2+0.2, 0.02]} rotation={[0, 0, Math.PI/2]}>
+                            <cylinderGeometry args={[0.015, 0.015, w+0.2, 8]} />
+                            <meshStandardMaterial color={goldL} metalness={0.9} roughness={0.15} />
+                        </mesh>
+                        <mesh position={[0, -(h/2+0.2), 0.02]} rotation={[0, 0, Math.PI/2]}>
+                            <cylinderGeometry args={[0.015, 0.015, w+0.2, 8]} />
+                            <meshStandardMaterial color={goldL} metalness={0.9} roughness={0.15} />
+                        </mesh>
+                        {/* Edge beading — vertical */}
+                        <mesh position={[-(w/2+0.2), 0, 0.02]}>
+                            <cylinderGeometry args={[0.015, 0.015, h+0.2, 8]} />
+                            <meshStandardMaterial color={goldL} metalness={0.9} roughness={0.15} />
+                        </mesh>
+                        <mesh position={[w/2+0.2, 0, 0.02]}>
+                            <cylinderGeometry args={[0.015, 0.015, h+0.2, 8]} />
+                            <meshStandardMaterial color={goldL} metalness={0.9} roughness={0.15} />
                         </mesh>
                     </group>
                 );
+            }
             case 'thin': // Super thin border
                 return (
                     <mesh position={[0, 0, -0.01]}>

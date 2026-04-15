@@ -11,10 +11,10 @@ interface ExhibitionInfo {
 
 // Default exhibition info for demo
 const defaultExhibition: ExhibitionInfo = {
-  title: '빛과 그림자의 경계',
-  subtitle: 'Where Light Meets Shadow',
-  artists: ['김서윤', '이한결', '박지안', '최예린'],
-  period: '2024.03.15 — 06.30',
+  title: '거장들의 빛',
+  subtitle: 'Light of the Masters',
+  artists: ['da Vinci', 'Vermeer', 'Van Gogh', 'Monet', 'Rembrandt', 'Botticelli'],
+  period: '15c — 19c · 르네상스에서 인상주의까지',
   gallery: '온전 갤러리 | Onliex Gallery',
 };
 

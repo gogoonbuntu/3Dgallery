@@ -31,8 +31,8 @@ function LoadingScreen() {
         </div>
       </div>
       <div className="loading-exhibition-info">
-        <h2 className="loading-exhibition-title">빛과 그림자의 경계</h2>
-        <p className="loading-exhibition-subtitle">Where Light Meets Shadow</p>
+        <h2 className="loading-exhibition-title">거장들의 빛</h2>
+        <p className="loading-exhibition-subtitle">Light of the Masters</p>
       </div>
       <div className="loading-progress-area">
         <div className="loading-spinner"></div>

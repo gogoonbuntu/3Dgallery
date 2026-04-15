@@ -19,9 +19,9 @@ export function TouchGuide() {
 
                 <div className="guide-divider"></div>
 
-                <h2>빛과 그림자의 경계</h2>
-                <p className="guide-exhibition-sub">Where Light Meets Shadow</p>
-                <p className="guide-exhibition-artists">김서윤 · 이한결 · 박지안 · 최예린</p>
+                <h2>거장들의 빛</h2>
+                <p className="guide-exhibition-sub">Light of the Masters</p>
+                <p className="guide-exhibition-artists">da Vinci · Vermeer · Van Gogh · Monet · Rembrandt · 외</p>
 
                 <div className="guide-divider"></div>
 
